@@ -1,0 +1,169 @@
+﻿<mah:MetroWindow
+    xmlns:mah="http://metro.mahapps.com/winfx/xaml/controls" x:Name="Main"
+    x:Class="Apollo.Editor.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:Apollo.Editor"
+    xmlns:graphxctrl="http://schemas.panthernet.ru/graphx/"
+    xmlns:iconpacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
+    mc:Ignorable="d"
+        Title="Apollo Editor" Height="600" Width="1024" Icon="apollo.editor.ico" UseLayoutRounding="True" Closing="MetroWindow_Closing" KeyDown="MetroWindow_KeyDown">
+    <mah:MetroWindow.RightWindowCommands>
+        <mah:WindowCommands>
+            <Button x:Name="btnFileMenu" Content="File" Click="BtnFileMenu_Click" />
+            <Button x:Name="btnParams" Content="Variables" Click="btnParams_Click" />
+            <Button x:Name="btnExpHelp" Content="Help" Click="btnExpHelp_Click" />
+            <Button x:Name="btnTest" Content="Reset Layout" Click="btnTest_Click" />
+        </mah:WindowCommands>
+    </mah:MetroWindow.RightWindowCommands>
+    <Window.Resources>
+        <local:ReverseBoolConverter x:Key="ReverseBool" />
+        <Storyboard x:Key="HideSelect">
+            <DoubleAnimation Storyboard.TargetProperty="Opacity" Storyboard.TargetName="Select" From="1.0" To="0" Duration="0:0:0.5" BeginTime="0" />
+            <ThicknessAnimation Storyboard.TargetProperty="Margin" Storyboard.TargetName="Select" From="0,0,0,0" To="0,-65,0,0" Duration="0:0:0.5" BeginTime="0" />
+            <ObjectAnimationUsingKeyFrames Storyboard.TargetName="Select" Storyboard.TargetProperty="Visibility" BeginTime="0:0:0.5">
+                <DiscreteObjectKeyFrame KeyTime="0:0:0.5" Value="{x:Static Visibility.Collapsed}" />
+            </ObjectAnimationUsingKeyFrames>
+        </Storyboard>
+        <Storyboard x:Key="ShowSelect">
+            <DoubleAnimation Storyboard.TargetProperty="Opacity" Storyboard.TargetName="Select" To="1.0" From="0" Duration="0:0:0.5" BeginTime="0" />
+            <ThicknessAnimation Storyboard.TargetProperty="Margin" Storyboard.TargetName="Select" To="0,0,0,0" From="0,-65,0,0" Duration="0:0:0.5" BeginTime="0" />
+            <ObjectAnimationUsingKeyFrames Storyboard.TargetName="Select" Storyboard.TargetProperty="Visibility" BeginTime="0">
+                <DiscreteObjectKeyFrame KeyTime="0:0:0" Value="{x:Static Visibility.Visible}" />
+            </ObjectAnimationUsingKeyFrames>
+        </Storyboard>
+        <ContextMenu x:Key="FileMenu">
+            <MenuItem x:Name="mNew" Header="New" Click="MNew_Click" InputGestureText="Ctrl + N">
+                <MenuItem.Icon>
+                    <iconpacks:PackIconFontAwesome Kind="FileSolid" Margin="5,0,0,0" />
+                </MenuItem.Icon>
+            </MenuItem>
+            <MenuItem x:Name="mOpen" Header="Open" Click="MOpen_Click" InputGestureText="Ctrl + O">
+                <MenuItem.Icon>
+                    <iconpacks:PackIconFontAwesome Kind="FolderOpenSolid" Margin="5,0,0,0" />
+                </MenuItem.Icon>
+            </MenuItem>
+            <Separator />
+            <MenuItem x:Name="mSave" Header="Save" Click="MSave_Click" InputGestureText="Ctrl + S">
+                <MenuItem.Icon>
+                    <iconpacks:PackIconFontAwesome Kind="SaveRegular" Margin="5,0,0,0" />
+                </MenuItem.Icon>
+            </MenuItem>
+            <MenuItem x:Name="mSaveAs" Header="Save as" Click="MSaveAs_Click" InputGestureText="Ctrl + Shift + S">
+                <MenuItem.Icon>
+                    <iconpacks:PackIconFontAwesome Kind="EllipsisHSolid" Margin="5,0,0,0" />
+                </MenuItem.Icon>
+            </MenuItem>
+            <Separator />
+            <MenuItem x:Name="mProperties" Header="Story properties" InputGestureText="Ctrl + Shift + P" Click="MProperties_Click">
+                <MenuItem.Icon>
+                    <iconpacks:PackIconFontAwesome Kind="TasksSolid" Margin="5,0,0,0" />
+                </MenuItem.Icon>
+            </MenuItem>
+            <Separator />
+            <MenuItem x:Name="mSettings" Header="Editor settings" Click="MProperties_Click" Visibility="Collapsed">
+                <MenuItem.Icon>
+                    <iconpacks:PackIconFontAwesome Kind="CogSolid" Margin="5,0,0,0" />
+                </MenuItem.Icon>
+            </MenuItem>
+            <MenuItem x:Name="mCheck" Header="Check story" InputGestureText="Ctrl + Shift + C" Visibility="Collapsed">
+                <MenuItem.Icon>
+                    <iconpacks:PackIconFontAwesome Kind="CheckSolid" Margin="5,0,0,0" />
+                </MenuItem.Icon>
+            </MenuItem>
+        </ContextMenu>
+    </Window.Resources>
+    <Grid ClipToBounds="True">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="1*" MinWidth="170" />
+            <ColumnDefinition Width="2" />
+            <ColumnDefinition Width="4*" />
+            <ColumnDefinition Width="2" />
+            <ColumnDefinition Width="350" MinWidth="300" />
+        </Grid.ColumnDefinitions>
+        <GridSplitter Grid.Column="1" HorizontalAlignment="Stretch" />
+        <GridSplitter Grid.Column="3" HorizontalAlignment="Stretch" />
+        <TreeView x:Name="tree" Margin="0,0,0,52" SelectedItemChanged="Tree_SelectedItemChanged" ItemsSource="{Binding Story.Dialogs}">
+            <TreeView.ItemContainerStyle>
+                <Style TargetType="{x:Type TreeViewItem}" BasedOn="{StaticResource {x:Type TreeViewItem}}">
+                    <Setter Property="IsSelected"  Value="{Binding Selected, Mode=TwoWay}" />
+                </Style>
+            </TreeView.ItemContainerStyle>
+            <TreeView.ItemTemplate>
+                <HierarchicalDataTemplate ItemsSource="{Binding Options}">
+                    <StackPanel Orientation="Horizontal">
+                        <iconpacks:PackIconFontAwesome Kind="FlagSolid" Visibility="{Binding Start, Converter={StaticResource BooleanToVisibilityConverter}}" Margin="0,0,5,0" />
+                        <TextBlock Text="{Binding Name}" />
+                    </StackPanel>
+                    <HierarchicalDataTemplate.ItemTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding Name}" />
+                        </DataTemplate>
+                    </HierarchicalDataTemplate.ItemTemplate>
+                </HierarchicalDataTemplate>
+            </TreeView.ItemTemplate>
+        </TreeView>
+        <Button x:Name="btnAdd" HorizontalAlignment="Left" Margin="10,0,0,10" VerticalAlignment="Bottom" Width="32" Style="{DynamicResource MahApps.Metro.Styles.MetroCircleButtonStyle}" Height="32" ToolTip="Add dialog" Click="BtnAdd_Click">
+            <iconpacks:PackIconFontAwesome Kind="PlusSolid" />
+        </Button>
+        <Button x:Name="btnRem" HorizontalAlignment="Left" Margin="47,0,0,10" VerticalAlignment="Bottom" Width="32" Style="{DynamicResource MahApps.Metro.Styles.MetroCircleButtonStyle}" Height="32" ToolTip="Remove selected element" Click="BtnRem_Click">
+            <iconpacks:PackIconFontAwesome Kind="MinusSolid" />
+        </Button>
+        <Button x:Name="btnOption" HorizontalAlignment="Right" Margin="0,0,10,10" VerticalAlignment="Bottom" Width="32" IsEnabled="False" Style="{DynamicResource MahApps.Metro.Styles.MetroCircleButtonStyle}" Height="32" ToolTip="Add dialog option" Click="BtnOption_Click">
+            <iconpacks:PackIconFontAwesome Kind="PlusSquareRegular" />
+        </Button>
+        <Button x:Name="btnUp" HorizontalAlignment="Left" Margin="84,0,0,18" VerticalAlignment="Bottom" Width="16" Style="{DynamicResource MahApps.Metro.Styles.MetroCircleButtonStyle}" Height="16" ToolTip="Move selected element up" Click="BtnUp_Click">
+            <iconpacks:PackIconFontAwesome Kind="ArrowUpSolid" Width="8" Height="8" />
+        </Button>
+        <Button x:Name="btnDown" HorizontalAlignment="Left" Margin="105,0,0,18" VerticalAlignment="Bottom" Width="16" Style="{DynamicResource MahApps.Metro.Styles.MetroCircleButtonStyle}" Height="16" ToolTip="Move selected element down" Click="BtnDown_Click">
+            <iconpacks:PackIconFontAwesome Kind="ArrowDownSolid" Width="8" Height="8" />
+        </Button>
+        <graphxctrl:ZoomControl x:Name="zoom" Grid.Column="2" Mode="Fill">
+            <graphxctrl:ZoomControl.Background>
+                <DrawingBrush TileMode="Tile" Viewport="0,0,3.77952755905512,3.77952755905512"
+                                     ViewportUnits="Absolute" Opacity="0.25">
+                    <DrawingBrush.RelativeTransform>
+                        <TransformGroup>
+                            <ScaleTransform CenterY="0.5" CenterX="0.5" ScaleX="{Binding Zoom, ElementName=zoom}" ScaleY="{Binding Zoom, ElementName=zoom}" />
+                        </TransformGroup>
+                    </DrawingBrush.RelativeTransform>
+                    <DrawingBrush.Drawing>
+                        <GeometryDrawing Brush="{DynamicResource WhiteBrush}">
+                            <GeometryDrawing.Geometry>
+                                <RectangleGeometry Rect="0,0,3.77952755905512,3.77952755905512" />
+                            </GeometryDrawing.Geometry>
+                            <GeometryDrawing.Pen>
+                                <Pen Brush="{DynamicResource GrayBrush2}" Thickness="0.25" />
+                            </GeometryDrawing.Pen>
+                        </GeometryDrawing>
+                    </DrawingBrush.Drawing>
+                </DrawingBrush>
+            </graphxctrl:ZoomControl.Background>
+            <local:GraphAreaExample x:Name="graph" VertexSelected="graph_VertexSelected" EdgeSelected="graph_EdgeSelected" VertexMouseUp="graph_VertexMouseUp" />
+        </graphxctrl:ZoomControl>
+        <ContentControl x:Name="scroll" Grid.Column="4" Margin="10">
+            <Label Content="Select item to edit its properties" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" />
+        </ContentControl>
+        <Grid x:Name="Select" Height="65" VerticalAlignment="Top" Grid.Column="2" Margin="0" Visibility="Collapsed">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*" />
+                <RowDefinition Height="20" />
+            </Grid.RowDefinitions>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <Grid.Background>
+                <LinearGradientBrush EndPoint="0.5,1" StartPoint="0.5,0">
+                    <GradientStop Color="#BF000000" />
+                    <GradientStop Color="#00000000" Offset="1" />
+                </LinearGradientBrush>
+            </Grid.Background>
+            <Label HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Content="Cancel" FontSize="22" Foreground="White" Background="Transparent" MouseDown="CancelSelect" />
+            <Label HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Content="Clear" FontSize="22" Foreground="White" Background="Transparent" Grid.Column="1" MouseDown="ClearSelect" />
+            <TextBlock TextWrapping="Wrap" Text="Click on dialog on Diagram or press one of buttons above. You can use Story Tree to navigate." Grid.ColumnSpan="2" TextAlignment="Center" Grid.Row="1" />
+        </Grid>
+    </Grid>
+</mah:MetroWindow>

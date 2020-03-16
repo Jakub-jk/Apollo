@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <RootNamespace>Apollo</RootNamespace>
+    <Platforms>AnyCPU;x64;x86</Platforms>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Reference Include="ExpressionEval">
+      <HintPath>..\..\ExpressionEvalStandard\ExpressionEval\bin\Release\netstandard2.0\ExpressionEval.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
+</Project>

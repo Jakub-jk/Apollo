@@ -1,0 +1,61 @@
+﻿<mah:MetroWindow
+    xmlns:mah="http://metro.mahapps.com/winfx/xaml/controls"
+    x:Class="Apollo.Editor.Splash"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:Apollo.Editor"
+    xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
+        mc:Ignorable="d"
+        Title="Apollo Editor - Start" Height="350" Width="600" ResizeMode="CanMinimize" ShowMaxRestoreButton="False" Icon="apollo.editor.ico" WindowStartupLocation="CenterScreen" Closed="MetroWindow_Closed" SizeToContent="Height">
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="pack://application:,,,/MahApps.Metro;component/Styles/FlatButton.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+            <local:PathToNameConverter x:Key="PathToName"/>
+            <local:PathToDirectoryConverter x:Key="PathToDir" />
+        </ResourceDictionary>
+    </Window.Resources>
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto"/>
+            <ColumnDefinition Width="3*"/>
+        </Grid.ColumnDefinitions>
+        <UniformGrid Rows="2" Margin="10">
+            <mah:Tile x:Name="tileNew" Title="New" HorizontalTitleAlignment="Center" Click="tileNew_Click">
+                <iconPacks:PackIconFontAwesome Kind="FileSolid" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Height="Auto" Width="Auto" Margin="40"/>
+            </mah:Tile>
+            <mah:Tile x:Name="tileOpen" Title="Open" HorizontalTitleAlignment="Center" Click="tileOpen_Click">
+                <iconPacks:PackIconFontAwesome Kind="FolderOpenSolid" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Height="Auto" Width="Auto" Margin="50"/>
+            </mah:Tile>
+        </UniformGrid>
+        <ContentControl Grid.Column="1" HorizontalContentAlignment="Center" VerticalContentAlignment="Center">
+            <GroupBox Header="Recent files" Background="{x:Null}" BorderBrush="{x:Null}" Foreground="Black" mah:GroupBoxHelper.HeaderForeground="Black" mah:ControlsHelper.HeaderFontSize="16">
+                <ListBox x:Name="Recent">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock TextTrimming="CharacterEllipsis" Background="Transparent" MouseDown="OpenElement">
+                                    <Run FontSize="14" Text="{Binding Converter={StaticResource PathToName}, Mode=OneWay}" /> (<Run FontSize="12" FontStyle="Italic" Text="{Binding Converter={StaticResource PathToDir}, Mode=OneWay}"/>)
+                                </TextBlock>
+                                <Button Width="20" Height="20" Grid.Column="1" ToolTip="Open" Background="Transparent" Click="OpenClick" Tag="{Binding}">
+                                    <iconPacks:PackIconFontAwesome Kind="FolderOpenSolid" Margin="-7.5,-5" Width="15" Height="15" />
+                                </Button>
+                                <Button Width="20" Height="20" Grid.Column="2" ToolTip="Remove from list" Background="Transparent" Click="RemoveClick" Tag="{Binding}">
+                                    <iconPacks:PackIconFontAwesome Kind="TrashAltSolid" Margin="-7.5,-5" Width="15" Height="15" />
+                                </Button>
+                            </Grid>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </GroupBox>
+        </ContentControl>
+    </Grid>
+</mah:MetroWindow>

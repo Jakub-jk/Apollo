@@ -1,0 +1,33 @@
+﻿<mah:MetroWindow
+    xmlns:mah="http://metro.mahapps.com/winfx/xaml/controls"
+    x:Class="Apollo.Editor.ExpressionsHelp"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:Apollo.Editor"
+    mc:Ignorable="d"
+        Title="Help" Width="700" Closing="MetroWindow_Closing" Height="400" Loaded="MetroWindow_Loaded">
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="1*" MaxWidth="200" />
+            <ColumnDefinition Width="2" />
+            <ColumnDefinition Width="2*" />
+        </Grid.ColumnDefinitions>
+        <TreeView x:Name="Tree" SelectedItemChanged="Tree_SelectedItemChanged">
+            <TreeView.ItemTemplate>
+                <HierarchicalDataTemplate>
+                    <TextBlock Text="{Binding Key}" />
+                </HierarchicalDataTemplate>
+            </TreeView.ItemTemplate>
+        </TreeView>
+        <GridSplitter Grid.Column="1" HorizontalAlignment="Stretch" ShowsPreview="True" />
+        <Label x:Name="Loading" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Grid.ColumnSpan="3" Background="{DynamicResource WhiteBrush}" Panel.ZIndex="100" Visibility="Collapsed">
+            <StackPanel Orientation="Vertical" HorizontalAlignment="Center" VerticalAlignment="Center">
+                <mah:ProgressRing IsActive="True" Height="100" Width="100" />
+                <TextBlock Text="Wait for browser to initialize..." />
+            </StackPanel>
+        </Label>
+        <WebBrowser  x:Name="Browser" Grid.Column="2" LoadCompleted="Browser_LoadCompleted" Navigating="Browser_Navigating" />
+    </Grid>
+</mah:MetroWindow>

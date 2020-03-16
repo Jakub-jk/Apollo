@@ -1,0 +1,29 @@
+﻿<mah:MetroWindow
+    xmlns:mah="http://metro.mahapps.com/winfx/xaml/controls"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:Apollo.Editor"
+        xmlns:Custom="http://metro.mahapps.com/winfx/xaml/iconpacks"
+    x:Class="Apollo.Editor.StoryProperties"
+        mc:Ignorable="d"
+        Title="Story Properties" d:DesignHeight="450" Width="400" ResizeMode="NoResize" ShowMaxRestoreButton="False" Closing="MetroWindow_Closing" SizeToContent="Height">
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="pack://application:,,,/MahApps.Metro;component/Styles/FlatButton.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Window.Resources>
+    <Grid>
+        <StackPanel Margin="10">
+            <TextBox x:Name="txtTitle" mah:TextBoxHelper.UseFloatingWatermark="True" mah:TextBoxHelper.Watermark="Title" Margin="0,0,0,10" TextChanged="SetEdited" />
+            <TextBox x:Name="txtAuthor" mah:TextBoxHelper.UseFloatingWatermark="True" mah:TextBoxHelper.Watermark="Author" Margin="0,0,0,10" TextChanged="SetEdited" />
+            <local:TextEditor x:Name="txtDescription" Watermark="Description" Margin="0,0,0,10" />
+            <TextBox x:Name="txtContinue" mah:TextBoxHelper.UseFloatingWatermark="True" mah:TextBoxHelper.Watermark="Continue string" Margin="0,0,0,10" TextChanged="SetEdited" />
+            <ComboBox x:Name="DefaultText" mah:TextBoxHelper.UseFloatingWatermark="True" mah:TextBoxHelper.Watermark="Default text color" Margin="0,0,0,10" SelectionChanged="DefaultText_SelectionChanged" />
+            <ComboBox x:Name="DefaultBack" mah:TextBoxHelper.UseFloatingWatermark="True" mah:TextBoxHelper.Watermark="Default background color" Margin="0,0,0,10" SelectionChanged="DefaultBack_SelectionChanged" />
+        </StackPanel>
+    </Grid>
+</mah:MetroWindow>

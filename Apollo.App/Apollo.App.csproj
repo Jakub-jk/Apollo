@@ -1,0 +1,16 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <ApplicationIcon>apollo.ico</ApplicationIcon>
+    <Platforms>AnyCPU;x64;x86</Platforms>
+    <AssemblyName>Apollo</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Update="apollo.story.ico">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+</Project>
