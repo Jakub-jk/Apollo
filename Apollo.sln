@@ -7,7 +7,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Apollo.Core", "Apollo.Core\
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Apollo.Editor", "Apollo.Editor\Apollo.Editor.csproj", "{3E46BFD1-6F7B-49CD-9D90-C4D25FFAA4FC}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Apollo.App", "Apollo.App\Apollo.App.csproj", "{374AB5F3-3867-447D-98B4-78EB9949E0F2}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Apollo", "Apollo\Apollo.csproj", "{374AB5F3-3867-447D-98B4-78EB9949E0F2}"
 	ProjectSection(ProjectDependencies) = postProject
 		{25250CDB-D37C-4717-896D-9CF23BEE8CA8} = {25250CDB-D37C-4717-896D-9CF23BEE8CA8}
 	EndProjectSection
