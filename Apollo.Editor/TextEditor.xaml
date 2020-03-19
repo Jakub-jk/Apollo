@@ -4,6 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:local="clr-namespace:Apollo.Editor"
+    xmlns:interop="clr-namespace:Microsoft.DwayneNeed.Interop;assembly=Microsoft.DwayneNeed"
              xmlns:mah="http://metro.mahapps.com/winfx/xaml/controls" xmlns:Custom="http://metro.mahapps.com/winfx/xaml/iconpacks" x:Name="textEditor" x:Class="Apollo.Editor.TextEditor"
              mc:Ignorable="d"
              d:DesignHeight="450" d:DesignWidth="500">
@@ -51,7 +52,7 @@
             <RowDefinition Height="150" />
         </Grid.RowDefinitions>
 
-        <TextBox x:Name="Editor" TextWrapping="Wrap" mah:TextBoxHelper.UseFloatingWatermark="True" mah:TextBoxHelper.Watermark="{Binding Watermark, ElementName=textEditor}" AcceptsReturn="True" AcceptsTab="True" FontFamily="Consolas" Background="Black" Foreground="White" SpellCheck.IsEnabled="True" ScrollViewer.VerticalScrollBarVisibility="Auto" Grid.Row="1" Margin="0" TextChanged="Editor_TextChanged" Text="{Binding Text, Mode=TwoWay}" LostFocus="Editor_LostFocus" CaretBrush="White" SelectionBrush="{DynamicResource AccentBaseColorBrush}" SelectionChanged="Editor_SelectionChanged" />
+        <TextBox x:Name="Editor" TextWrapping="Wrap" mah:TextBoxHelper.UseFloatingWatermark="True" mah:TextBoxHelper.Watermark="{Binding Watermark, ElementName=textEditor}" AcceptsReturn="True" AcceptsTab="True" FontFamily="Consolas" Background="Black" Foreground="White" SpellCheck.IsEnabled="True" ScrollViewer.VerticalScrollBarVisibility="Auto" Grid.Row="1" Margin="0" TextChanged="Editor_TextChanged" Text="{Binding Text, Mode=TwoWay}" LostFocus="Editor_LostFocus" CaretBrush="White" SelectionBrush="{DynamicResource AccentBaseColorBrush}" SelectionChanged="Editor_SelectionChanged" IsUndoEnabled="True" />
         <WrapPanel Orientation="Horizontal" Grid.Row="0" Focusable="False" Background="#19000000">
             <mah:DropDownButton x:Name="sbFore" Margin="5" Content="Text" Tag="Tło" BorderThickness="0,2" Focusable="False">
                 <mah:DropDownButton.BorderBrush>
@@ -113,7 +114,12 @@
                 <RowDefinition Height="*" />
             </Grid.RowDefinitions>
             <TextBlock Text="Preview:" Margin="0,0,0,5" />
-            <WebBrowser x:Name="Preview" Grid.Row="1" />
+            <interop:AirspaceDecorator AirspaceMode="Redirect"
+                                   Background="Transparent"
+                                   IsInputRedirectionEnabled="True"
+                                   IsOutputRedirectionEnabled="True">
+                <WebBrowser x:Name="Preview" Grid.Row="1" />
+            </interop:AirspaceDecorator>
         </Grid>
     </Grid>
 </UserControl>

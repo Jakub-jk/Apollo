@@ -7,6 +7,7 @@ using System.IO;
 using System.Collections;
 using System.ComponentModel;
 using System.Collections.ObjectModel;
+using System.IO.Compression;
 
 namespace Apollo
 {
@@ -17,6 +18,7 @@ namespace Apollo
         private ConsoleColor _back = ConsoleColor.Black, _text = ConsoleColor.White;
         private ObservableCollection<Dialog> _dialogs = new ObservableCollection<Dialog>();
         private ObservableCollection<Variable> _vars = new ObservableCollection<Variable>();
+        private ObservableCollection<Tag> _tags = new ObservableCollection<Tag>();
 
         [XmlAttribute]
         public string ID { get => _id; set { _id = value; PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("ID")); } }
@@ -45,8 +47,11 @@ namespace Apollo
         [XmlArray("Variables")]
         public ObservableCollection<Variable> Variables { get => _vars; set { _vars = value; PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("Variables")); } }
 
+        [XmlArray("Tags")]
+        public ObservableCollection<Tag> Tags { get => _tags; set { _tags = value; PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("Tags")); } }
+
         [XmlIgnore]
-        public Dialog StartDialog { get => Dialogs.First((d) => d.Start); }
+        public Dialog StartDialog => Dialogs.FirstOrDefault((d) => d.Start);
 
         [XmlIgnore]
         public string CurrentID { get; private set; }
@@ -61,6 +66,7 @@ namespace Apollo
         {
             Dialogs.CollectionChanged += (s, e) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("Dialogs"));
             Variables.CollectionChanged += (s, e) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("Variables"));
+            Tags.CollectionChanged += (s, e) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("Tags"));
         }
 
         public Dialog FindParent(DialogOption o)
@@ -72,15 +78,33 @@ namespace Apollo
         {
             try
             {
+                Story ret = null;
                 XmlSerializer xml = new XmlSerializer(typeof(Story));
                 using (var fs = new FileStream(filename, FileMode.Open, FileAccess.Read, FileShare.Read))
-                    return xml.Deserialize(fs) as Story;
+                    ret = xml.Deserialize(fs) as Story;
+                foreach (Dialog d in ret)
+                    d.Tag = ret.Tags.FirstOrDefault(x => x.ID == d.TagID);
+                return ret;
+            }
+            catch (Exception e) { return null; }
+        }
+
+        public static Story LoadCompressed(string filename)
+        {
+            try
+            {
+                XmlSerializer xml = new XmlSerializer(typeof(Story));
+                using (var fs = new FileStream(filename, FileMode.Open, FileAccess.Read, FileShare.Read))
+                using (var gz = new GZipStream(fs, CompressionMode.Decompress))
+                    return xml.Deserialize(gz) as Story;
             }
             catch { return null; }
         }
 
         public void Save(string filename)
         {
+            foreach (Dialog d in this)
+                d.TagID = d.Tag == null ? "" : d.Tag.ID;
             XmlSerializer xml = new XmlSerializer(typeof(Story));
             bool done = false;
             while (!done)
@@ -89,6 +113,29 @@ namespace Apollo
                 {
                     using (var fs = new FileStream(filename + ".tmp", FileMode.OpenOrCreate, FileAccess.Write))
                         xml.Serialize(fs, this);
+                    File.Delete(filename);
+                    File.Move(filename + ".tmp", filename);
+                    done = true;
+                }
+                catch { }
+            }
+        }
+
+        public void SaveCompressed(string filename)
+        {
+            XmlSerializer xml = new XmlSerializer(typeof(Story));
+            bool done = false;
+            while (!done)
+            {
+                try
+                {
+                    var tmp = Clone();
+                    foreach (var v in tmp)
+                        v.ClearUnnecessary();
+                    tmp.Tags = null;
+                    using (var fs = new FileStream(filename + ".tmp", FileMode.OpenOrCreate, FileAccess.Write))
+                    using (var gz = new GZipStream(fs, CompressionMode.Compress))
+                        xml.Serialize(gz, this);
                     File.Delete(filename);
                     File.Move(filename + ".tmp", filename);
                     done = true;
@@ -172,6 +219,25 @@ namespace Apollo
             return Dialogs.GetEnumerator();
         }
 
+        public Story Clone()
+        {
+            Story s = new Story();
+            s.ID = ID;
+            s.Title = Title;
+            s.Author = Author;
+            s.Continue = Continue;
+            s.DefaultBack = DefaultBack;
+            s.DefaultText = DefaultText;
+            s.Description = Description;
+            foreach (Dialog d in Dialogs)
+                s.Dialogs.Add(d.Clone());
+            foreach (Variable v in Variables)
+                s.Variables.Add(v.Clone());
+            foreach (Tag t in Tags)
+                s.Tags.Add(t.Clone());
+            return s;
+        }
+
         public Dialog this[int index]
         {
             get => Dialogs[index];
@@ -182,44 +248,6 @@ namespace Apollo
         {
             get => Dialogs.Where((d) => ID == d.ID).First();
             set => Dialogs[Dialogs.IndexOf(Dialogs.Where((d) => ID == d.ID).First())] = value;
-        }
-    }
-
-    public class Variable : INotifyPropertyChanged
-    {
-        public event PropertyChangedEventHandler PropertyChanged;
-
-        private string _name = "";
-        private object _value;
-
-        public string Name
-        {
-            get => _name;
-            set
-            {
-                _name = value;
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("Name"));
-            }
-        }
-
-        public object Value
-        {
-            get => _value;
-            set
-            {
-                this._value = value;
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("Value"));
-            }
-        }
-
-        public Variable()
-        {
-        }
-
-        public Variable(string name, object value = null)
-        {
-            _name = name;
-            _value = value;
         }
     }
 }

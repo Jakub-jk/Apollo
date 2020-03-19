@@ -52,6 +52,7 @@ namespace Apollo.Editor
 
         public void Clear()
         {
+            if (doc.body == null) return;
             doc.body.innerHTML = "";
             doc.body.style.color = Parser.DefaultText.ToColor().ToString().Replace("#FF", "#");
             doc.body.style.backgroundColor = Parser.DefaultBack.ToColor().ToString().Replace("#FF", "#");
@@ -76,8 +77,10 @@ namespace Apollo.Editor
 
         public void Write(string s, params object[] args)
         {
+            if (doc == null) return;
             var trg = (doc as HTMLDocument).getElementById(target);
-            trg.innerHTML += s;
+            if (trg != null)
+                trg.innerHTML += s;
         }
 
         public void Write(object o)

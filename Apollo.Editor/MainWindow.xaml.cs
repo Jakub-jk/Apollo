@@ -19,6 +19,7 @@ using System.Windows.Media.Animation;
 using GraphX.Controls;
 using System.IO;
 using System.Collections.Generic;
+using System.Windows.Media;
 
 namespace Apollo.Editor
 {
@@ -27,11 +28,22 @@ namespace Apollo.Editor
     /// </summary>
     public partial class MainWindow : MetroWindow
     {
+        public static RoutedCommand NewStoryCmd = new RoutedCommand("NewStoryCmd", typeof(MainWindow), new InputGestureCollection() { new KeyGesture(Key.N, ModifierKeys.Control) });
+        public static RoutedCommand OpenCmd = new RoutedCommand("OpenCmd", typeof(MainWindow), new InputGestureCollection() { new KeyGesture(Key.O, ModifierKeys.Control) });
+        public static RoutedCommand SaveCmd = new RoutedCommand("SaveCmd", typeof(MainWindow), new InputGestureCollection() { new KeyGesture(Key.S, ModifierKeys.Control) });
+        public static RoutedCommand SaveAsCmd = new RoutedCommand("SaveAsCmd", typeof(MainWindow), new InputGestureCollection() { new KeyGesture(Key.S, ModifierKeys.Control | ModifierKeys.Shift) });
+
+        public static RoutedCommand ShowPropertiesCmd = new RoutedCommand("ShowPropertiesCmd", typeof(MainWindow), new InputGestureCollection() { new KeyGesture(Key.P, ModifierKeys.Control | ModifierKeys.Shift) });
+        public static RoutedCommand ShowVariablesCmd = new RoutedCommand("ShowVariablesCmd", typeof(MainWindow), new InputGestureCollection() { new KeyGesture(Key.V, ModifierKeys.Control | ModifierKeys.Shift) });
+        public static RoutedCommand ShowTagsCmd = new RoutedCommand("ShowTagsCmd", typeof(MainWindow), new InputGestureCollection() { new KeyGesture(Key.T, ModifierKeys.Control) });
+        public static RoutedCommand ExportCmd = new RoutedCommand("ExportCmd", typeof(MainWindow), new InputGestureCollection() { new KeyGesture(Key.E, ModifierKeys.Control) });
+
         private EditDialog editor = new EditDialog() { HorizontalAlignment = HorizontalAlignment.Stretch };
         private StoryProperties sp = new StoryProperties();
         private ExpressionsHelp eh = new ExpressionsHelp();
         private Parameters ps = new Parameters();
         private List<GraphPos> pos = new List<GraphPos>();
+        private Tags ts = new Tags();
         private object placeholder = null;
         private string path = "";
         public Story Story { get; set; } = null;
@@ -54,24 +66,51 @@ namespace Apollo.Editor
                 JumpList.SetJumpList(App.Current, new JumpList());
             var args = Environment.GetCommandLineArgs();
         check:
-            if (File.Exists(args[0]) && (args[0].EndsWith(".apstp") || args[0].EndsWith(".apmap")))
+            if (args.Length > 1 && File.Exists(args[1]) && (args[1].EndsWith(".apstp") || args[1].EndsWith(".apmap")))
             {
-                if (args[0].EndsWith(".apmap"))
+                if (args[1].EndsWith(".apmap"))
                 {
-                    args[0].Replace(".apmap", ".apstp");
+                    args[1].Replace(".apmap", ".apstp");
                     goto check;
                 }
-                path = Environment.GetCommandLineArgs()[0];
-                Open();
+                if (!Open(args[1]))
+                {
+                    args = new string[1];
+                    goto check;
+                }
             }
             else UpdateRecent(false);
             sp.txtTitle.TextChanged += (s, e) => Title = "Apollo Editor - " + sp.txtTitle.Text;
+
+            List<CommandBinding> Bindings = new List<CommandBinding>()
+            {
+                new CommandBinding(ShowPropertiesCmd, ShowProperties),
+                new CommandBinding(ShowVariablesCmd, (s, e) => ps.ShowDialog()),
+                new CommandBinding(ShowTagsCmd, (s, e) => ts.ShowDialog()),
+                new CommandBinding(NewStoryCmd, New),
+                new CommandBinding(OpenCmd, Open),
+                new CommandBinding(SaveAsCmd, SaveAs),
+                new CommandBinding(SaveCmd, Save),
+                new CommandBinding(ExportCmd, Export)
+            };
+
+            foreach (var v in Bindings)
+            {
+                CommandBindings.Add(v);
+                (Resources["FileMenu"] as ContextMenu).CommandBindings.Add(v);
+                (Resources["StoryMenu"] as ContextMenu).CommandBindings.Add(v);
+            }
+
             if (path.IsNullOrEmpty())
             {
                 ShowInTaskbar = false;
                 Hide();
                 new Splash().Show();
             }
+        }
+
+        public void Export(object sender, ExecutedRoutedEventArgs e)
+        {
         }
 
         public void New()
@@ -84,6 +123,8 @@ namespace Apollo.Editor
         {
             this.path = path;
             Open(skipMessage: true);
+            if (Story == null)
+                path = "";
             return Story != null;
         }
 
@@ -120,16 +161,11 @@ namespace Apollo.Editor
 
             try
             {
-                var sel = tree.ItemContainerGenerator.ContainerFromItem(tree.SelectedItem) as TreeViewItem;
                 foreach (Dialog d in tree.Items)
                 {
-                    var tvi = tree.ItemContainerGenerator.ContainerFromItem(d) as TreeViewItem;
-                    if (d != tree.SelectedItem as Dialog && tvi != (sel.Parent as TreeViewItem))
-                        tvi.IsExpanded = false;
+                    var res = tree.SelectedItem == d || (tree.SelectedItem is DialogOption && Story.FindParent(tree.SelectedItem as DialogOption) == d);
+                    (tree.ItemContainerGenerator.ContainerFromItem(d) as TreeViewItem).IsExpanded = res;
                 }
-                if (sel.Parent != null && sel.Parent.GetType() == typeof(TreeViewItem))
-                    (sel.Parent as TreeViewItem).IsExpanded = true;
-                else sel.IsExpanded = true;
             }
             catch
             {
@@ -173,16 +209,22 @@ namespace Apollo.Editor
                 return;
             if (tree.SelectedItem is DialogOption)
             {
-                var edge = graph.EdgesList.First(x => x.Key.DialogOption.ID == (tree.SelectedItem as DialogOption).ID).Key;
-                graph.RemoveEdge(edge);
-                gr.RemoveEdge(edge);
+                var edge = graph.EdgesList.FirstOrDefault(x => x.Key.DialogOption.ID == (tree.SelectedItem as DialogOption).ID);
+                if (edge.Key != null)
+                {
+                    graph.RemoveEdge(edge.Key);
+                    gr.RemoveEdge(edge.Key);
+                }
                 Story.FindParent(tree.SelectedItem as DialogOption).Options.Remove(tree.SelectedItem as DialogOption);
             }
             else
             {
-                var vertex = graph.VertexList.First(x => x.Key.Dialog.ID == (tree.SelectedItem as Dialog).ID).Key;
-                gr.RemoveVertex(vertex);
-                graph.RemoveVertex(vertex);
+                var vertex = graph.VertexList.FirstOrDefault(x => x.Key.Dialog.ID == (tree.SelectedItem as Dialog).ID);
+                if (vertex.Key != null)
+                {
+                    gr.RemoveVertex(vertex.Key);
+                    graph.RemoveVertex(vertex.Key);
+                }
                 Story.Dialogs.Remove(tree.SelectedItem as Dialog);
             }
             Relayout();
@@ -193,16 +235,15 @@ namespace Apollo.Editor
 
         private void BtnOption_Click(object sender, RoutedEventArgs e)
         {
-            var tmp = new DialogOption() { Name = "<new>" };
-            if (tree.SelectedItem is DialogOption)
-                Story.FindParent(tree.SelectedItem as DialogOption).Options.Add(tmp);
+            var target = tree.SelectedItem;
+            var tmp = new DialogOption() { Name = "<new>", Selected = true };
+            if (target is DialogOption)
+                Story.FindParent(target as DialogOption).Options.Add(tmp);
             else
-                (tree.SelectedItem as Dialog).Options.Add(tmp);
-            foreach (Dialog v in tree.Items)
-                v.Selected = false;
-            tmp.Selected = true;
+                (target as Dialog).Options.Add(tmp);
             set.Default.Edited = true;
-            tree.Items.Refresh();
+            //tree.Items.Refresh();
+            tmp.Selected = true;
         }
 
         private void BtnUp_Click(object sender, RoutedEventArgs e)
@@ -252,10 +293,10 @@ namespace Apollo.Editor
             (Resources["FileMenu"] as ContextMenu).IsOpen = true;
         }
 
-        private void MSave_Click(object sender, RoutedEventArgs e)
+        private void Save(object sender, ExecutedRoutedEventArgs e)
         {
             if (string.IsNullOrEmpty(path))
-                MSaveAs_Click(sender, e);
+                SaveAsCmd.Execute(null, this);
             else
             {
                 Save();
@@ -263,7 +304,7 @@ namespace Apollo.Editor
             }
         }
 
-        private void MSaveAs_Click(object sender, RoutedEventArgs e)
+        private void SaveAs(object sender, ExecutedRoutedEventArgs e)
         {
             VistaSaveFileDialog s = new VistaSaveFileDialog();
             s.Filter = "Apollo story|*.apstp";
@@ -291,15 +332,13 @@ namespace Apollo.Editor
             switch (result)
             {
                 case MessageDialogResult.Affirmative:
-                    MSave_Click(null, null);
+                    SaveCmd.Execute(null, this);
                     return true;
 
                 case MessageDialogResult.Negative:
                     return true;
 
                 case MessageDialogResult.FirstAuxiliary:
-                    return false;
-
                 default:
                     return false;
             }
@@ -324,7 +363,7 @@ namespace Apollo.Editor
 
         private GraphExample gr = new GraphExample();
 
-        private void GenerateGraph()
+        private void GenerateGraph(bool reset = false)
         {
             gr.Clear();
             foreach (var d in Story.Dialogs)
@@ -359,7 +398,7 @@ namespace Apollo.Editor
             }
 
             graph.GenerateGraph(true, true);
-            if (path.Length > 0 && File.Exists(path.Replace(".apstp", ".apmap")))
+            if (!reset && path.Length > 0 && File.Exists(path.Replace(".apstp", ".apmap")))
             {
                 System.Xml.Serialization.XmlSerializer xml = new System.Xml.Serialization.XmlSerializer(typeof(List<GraphPos>));
                 try
@@ -373,7 +412,8 @@ namespace Apollo.Editor
             graph.ShowAllEdgesLabels(false);
             graph.SetVerticesDrag(true, true);
             graph.SetEdgesDashStyle(EdgeDashStyle.Dash);
-            graph.ShowAllEdgesArrows(false);
+            foreach (var v in graph.VertexList)
+                v.Value.Background = v.Key.Dialog.Tag == null ? Brushes.LightGray : new SolidColorBrush(v.Key.Dialog.Tag.Color.ToMediaColor());
         }
 
         public void Relayout(bool rel = true)
@@ -484,7 +524,9 @@ namespace Apollo.Editor
             BindingOperations.SetBinding(sp.DefaultText, ComboBox.SelectedItemProperty, new Binding("DefaultText") { Source = Story, Mode = BindingMode.TwoWay, UpdateSourceTrigger = UpdateSourceTrigger.PropertyChanged });
             BindingOperations.SetBinding(sp.DefaultBack, ComboBox.SelectedItemProperty, new Binding("DefaultBack") { Source = Story, Mode = BindingMode.TwoWay, UpdateSourceTrigger = UpdateSourceTrigger.PropertyChanged });
             BindingOperations.SetBinding(ps.data, DataGrid.ItemsSourceProperty, new Binding("Variables") { Source = Story, Mode = BindingMode.TwoWay, UpdateSourceTrigger = UpdateSourceTrigger.PropertyChanged });
+            BindingOperations.SetBinding(ts.tags, DataGrid.ItemsSourceProperty, new Binding("Tags") { Source = Story, Mode = BindingMode.TwoWay, UpdateSourceTrigger = UpdateSourceTrigger.PropertyChanged });
             BindingOperations.SetBinding(editor.text.btnVariable, ItemsControl.ItemsSourceProperty, new Binding("Variables") { Source = Story, Mode = BindingMode.OneWay, UpdateSourceTrigger = UpdateSourceTrigger.PropertyChanged });
+            //BindingOperations.SetBinding(SelectTagMenu, DataGrid.ItemsSourceProperty, new Binding("Tags") { Source = Story, Mode = BindingMode.OneWay, UpdateSourceTrigger = UpdateSourceTrigger.PropertyChanged });
             ps.data.Items.Refresh();
             StoryChanged?.Invoke(this, Story);
             Title = "Apollo Editor - " + Story.Title;
@@ -494,14 +536,17 @@ namespace Apollo.Editor
             set.Default.Edited = false;
         }
 
-        public void UpdateVertex(Dialog d)
+        public void UpdateVertex(Dialog d) => Dispatcher.Invoke(() =>
         {
             var ver = graph.VertexList.FirstOrDefault(x => x.Key.Dialog.ID == d.ID);
             if (ver.Value != null)
+            {
                 ver.Value.Vertex = new DialogVertex(d);
-        }
+                ver.Value.Background = d.Tag == null ? Brushes.LightGray : new SolidColorBrush(d.Tag.Color.ToMediaColor());
+            }
+        });
 
-        private async void MOpen_Click(object sender, RoutedEventArgs e)
+        private async void Open(object sender, ExecutedRoutedEventArgs e)
         {
             if (!await ShowSaveDialog()) return;
             VistaOpenFileDialog o = new VistaOpenFileDialog();
@@ -515,31 +560,11 @@ namespace Apollo.Editor
             o.ShowDialog();
         }
 
-        private async void MNew_Click(object sender, RoutedEventArgs e)
+        private async void New(object sender, ExecutedRoutedEventArgs e)
         {
             if (!await ShowSaveDialog()) return;
             path = "";
             Open(true);
-        }
-
-        private void MetroWindow_KeyDown(object sender, KeyEventArgs e)
-        {
-            if (Keyboard.Modifiers == ModifierKeys.Control && e.Key == Key.S)
-            {
-                MSave_Click(null, null);
-            }
-            else if (Keyboard.Modifiers == (ModifierKeys.Control | ModifierKeys.Shift) && e.Key == Key.S)
-            {
-                MSaveAs_Click(null, null);
-            }
-            else if (Keyboard.Modifiers == ModifierKeys.Control && e.Key == Key.N)
-            {
-                MNew_Click(null, null);
-            }
-            else if (Keyboard.Modifiers == ModifierKeys.Control && e.Key == Key.O)
-            {
-                MOpen_Click(null, null);
-            }
         }
 
         private void MProperties_Click(object sender, RoutedEventArgs e)
@@ -653,9 +678,23 @@ namespace Apollo.Editor
 
         private void btnTest_Click(object sender, RoutedEventArgs e)
         {
-            graph.RelayoutGraph(true);
+            GenerateGraph(true);
             //foreach (var v in graph.VertexList)
             //    v.Value.Vertex = new DialogVertex((v.Value.Vertex as DialogVertex).Dialog);
+        }
+
+        private void mExport_Click(object sender, RoutedEventArgs e)
+        {
+        }
+
+        private void ShowProperties(object sender, ExecutedRoutedEventArgs e)
+        {
+            sp.ShowDialog();
+        }
+
+        private void btnStory_Click(object sender, RoutedEventArgs e)
+        {
+            (Resources["StoryMenu"] as ContextMenu).IsOpen = true;
         }
     }
 }

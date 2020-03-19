@@ -15,7 +15,7 @@ namespace Apollo.Editor
     {
         private void Application_DispatcherUnhandledException(object sender, System.Windows.Threading.DispatcherUnhandledExceptionEventArgs e)
         {
-            MessageBox.Show("Unexpected error occured" + Environment.NewLine + e.Exception.Message + Environment.NewLine + e.Exception.StackTrace, "Apollo Editor error", MessageBoxButton.OK, MessageBoxImage.Error);
+            MessageBox.Show("Unexpected error occured" + Environment.NewLine + e.Exception.Message + Environment.NewLine + e.Exception.StackTrace + Environment.NewLine + "-----INNER-----" + e.Exception.InnerException, "Apollo Editor error", MessageBoxButton.OK, MessageBoxImage.Error);
             e.Handled = true;
         }
     }

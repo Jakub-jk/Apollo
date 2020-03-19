@@ -3,6 +3,7 @@ using Markdig;
 using mshtml;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -18,16 +19,19 @@ namespace Apollo.Editor
     public partial class ExpressionsHelp : MetroWindow
     {
         private Dictionary<string, string> HelpFiles = new Dictionary<string, string>();
+        private string path = Path.Combine(Process.GetCurrentProcess().MainModule.FileName, "Help");
 
         public ExpressionsHelp()
         {
             InitializeComponent();
-            string style = "";
-            if (File.Exists("Help\\style.css"))
-                style = $"<style>{File.ReadAllText("Help\\style.css")}</style>";
-            var pipeline = new MarkdownPipelineBuilder().UseSoftlineBreakAsHardlineBreak().UsePipeTables().Build();
-            foreach (var v in Directory.GetFiles("Help", "*.md"))
-                HelpFiles.Add(Path.GetFileNameWithoutExtension(v).Replace("_", " "), $@"<!DOCTYPE html>
+            if (Directory.Exists(path))
+            {
+                string style = "";
+                if (File.Exists(Path.Combine(path, "style.css")))
+                    style = $"<style>{File.ReadAllText(Path.Combine(path, "style.css"))}</style>";
+                var pipeline = new MarkdownPipelineBuilder().UseSoftlineBreakAsHardlineBreak().UsePipeTables().Build();
+                foreach (var v in Directory.GetFiles(path, "*.md"))
+                    HelpFiles.Add(Path.GetFileNameWithoutExtension(v).Replace("_", " "), $@"<!DOCTYPE html>
             <html>
             <head>
             <meta http-equiv=""X-UA-Compatible"" content=""IE=edge"" >
@@ -37,8 +41,9 @@ namespace Apollo.Editor
             { Markdown.ToHtml(File.ReadAllText(v), pipeline).Replace("<thead>", "").Replace("</thead>", "").Replace("<tbody>", "").Replace("</tbody>", "")}
             </body>
             </html> ");
-            Tree.ItemsSource = HelpFiles;
-            Tree.Items.Refresh();
+                Tree.ItemsSource = HelpFiles;
+                Tree.Items.Refresh();
+            }
         }
 
         private void MetroWindow_Closing(object sender, System.ComponentModel.CancelEventArgs e)

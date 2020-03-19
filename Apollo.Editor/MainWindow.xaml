@@ -9,17 +9,20 @@
     xmlns:graphxctrl="http://schemas.panthernet.ru/graphx/"
     xmlns:iconpacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
     mc:Ignorable="d"
-        Title="Apollo Editor" Height="600" Width="1024" Icon="apollo.editor.ico" UseLayoutRounding="True" Closing="MetroWindow_Closing" KeyDown="MetroWindow_KeyDown">
+        Title="Apollo Editor" Height="600" Width="1024" Icon="apollo.editor.ico" UseLayoutRounding="True" Closing="MetroWindow_Closing">
     <mah:MetroWindow.RightWindowCommands>
         <mah:WindowCommands>
             <Button x:Name="btnFileMenu" Content="File" Click="BtnFileMenu_Click" />
-            <Button x:Name="btnParams" Content="Variables" Click="btnParams_Click" />
+            <Button x:Name="btnStory" Content="Story" Click="btnStory_Click" />
             <Button x:Name="btnExpHelp" Content="Help" Click="btnExpHelp_Click" />
             <Button x:Name="btnTest" Content="Reset Layout" Click="btnTest_Click" />
         </mah:WindowCommands>
     </mah:MetroWindow.RightWindowCommands>
     <Window.Resources>
         <local:ReverseBoolConverter x:Key="ReverseBool" />
+        <local:TagBrushConverter x:Key="TagBrush" />
+        <local:TagNameConverter x:Key="TagName" />
+        <local:DrawingMediaColorConverter x:Key="DMColor" />
         <Storyboard x:Key="HideSelect">
             <DoubleAnimation Storyboard.TargetProperty="Opacity" Storyboard.TargetName="Select" From="1.0" To="0" Duration="0:0:0.5" BeginTime="0" />
             <ThicknessAnimation Storyboard.TargetProperty="Margin" Storyboard.TargetName="Select" From="0,0,0,0" To="0,-65,0,0" Duration="0:0:0.5" BeginTime="0" />
@@ -35,31 +38,25 @@
             </ObjectAnimationUsingKeyFrames>
         </Storyboard>
         <ContextMenu x:Key="FileMenu">
-            <MenuItem x:Name="mNew" Header="New" Click="MNew_Click" InputGestureText="Ctrl + N">
+            <MenuItem x:Name="mNew" Header="New" Command="{x:Static local:MainWindow.NewStoryCmd}">
                 <MenuItem.Icon>
                     <iconpacks:PackIconFontAwesome Kind="FileSolid" Margin="5,0,0,0" />
                 </MenuItem.Icon>
             </MenuItem>
-            <MenuItem x:Name="mOpen" Header="Open" Click="MOpen_Click" InputGestureText="Ctrl + O">
+            <MenuItem x:Name="mOpen" Header="Open" Command="{x:Static local:MainWindow.OpenCmd}">
                 <MenuItem.Icon>
                     <iconpacks:PackIconFontAwesome Kind="FolderOpenSolid" Margin="5,0,0,0" />
                 </MenuItem.Icon>
             </MenuItem>
             <Separator />
-            <MenuItem x:Name="mSave" Header="Save" Click="MSave_Click" InputGestureText="Ctrl + S">
+            <MenuItem x:Name="mSave" Header="Save" Command="{x:Static local:MainWindow.SaveCmd}">
                 <MenuItem.Icon>
                     <iconpacks:PackIconFontAwesome Kind="SaveRegular" Margin="5,0,0,0" />
                 </MenuItem.Icon>
             </MenuItem>
-            <MenuItem x:Name="mSaveAs" Header="Save as" Click="MSaveAs_Click" InputGestureText="Ctrl + Shift + S">
+            <MenuItem x:Name="mSaveAs" Header="Save as" Command="{x:Static local:MainWindow.SaveAsCmd}">
                 <MenuItem.Icon>
                     <iconpacks:PackIconFontAwesome Kind="EllipsisHSolid" Margin="5,0,0,0" />
-                </MenuItem.Icon>
-            </MenuItem>
-            <Separator />
-            <MenuItem x:Name="mProperties" Header="Story properties" InputGestureText="Ctrl + Shift + P" Click="MProperties_Click">
-                <MenuItem.Icon>
-                    <iconpacks:PackIconFontAwesome Kind="TasksSolid" Margin="5,0,0,0" />
                 </MenuItem.Icon>
             </MenuItem>
             <Separator />
@@ -68,9 +65,33 @@
                     <iconpacks:PackIconFontAwesome Kind="CogSolid" Margin="5,0,0,0" />
                 </MenuItem.Icon>
             </MenuItem>
+        </ContextMenu>
+        <ContextMenu x:Key="StoryMenu">
+            <MenuItem x:Name="mProperties" Header="Story properties" Command="{x:Static local:MainWindow.ShowPropertiesCmd}">
+                <MenuItem.Icon>
+                    <iconpacks:PackIconFontAwesome Kind="TasksSolid" Margin="5,0,0,0" />
+                </MenuItem.Icon>
+            </MenuItem>
             <MenuItem x:Name="mCheck" Header="Check story" InputGestureText="Ctrl + Shift + C" Visibility="Collapsed">
                 <MenuItem.Icon>
                     <iconpacks:PackIconFontAwesome Kind="CheckSolid" Margin="5,0,0,0" />
+                </MenuItem.Icon>
+            </MenuItem>
+            <Separator />
+            <MenuItem x:Name="mExport" Header="Export story" Command="{x:Static local:MainWindow.ExportCmd}">
+                <MenuItem.Icon>
+                    <iconpacks:PackIconFontAwesome Kind="FileExportSolid" Margin="5,0,0,0" />
+                </MenuItem.Icon>
+            </MenuItem>
+            <Separator />
+            <MenuItem x:Name="mVariables" Header="Variables" Command="{x:Static local:MainWindow.ShowVariablesCmd}">
+                <MenuItem.Icon>
+                    <iconpacks:PackIconFontAwesome Kind="DatabaseSolid" Margin="5,0,0,0" />
+                </MenuItem.Icon>
+            </MenuItem>
+            <MenuItem x:Name="mTags" Header="Tags" Command="{x:Static local:MainWindow.ShowTagsCmd}">
+                <MenuItem.Icon>
+                    <iconpacks:PackIconFontAwesome Kind="TagsSolid" Margin="5,0,0,0" />
                 </MenuItem.Icon>
             </MenuItem>
         </ContextMenu>
@@ -94,8 +115,15 @@
             <TreeView.ItemTemplate>
                 <HierarchicalDataTemplate ItemsSource="{Binding Options}">
                     <StackPanel Orientation="Horizontal">
-                        <iconpacks:PackIconFontAwesome Kind="FlagSolid" Visibility="{Binding Start, Converter={StaticResource BooleanToVisibilityConverter}}" Margin="0,0,5,0" />
-                        <TextBlock Text="{Binding Name}" />
+                        <Rectangle HorizontalAlignment="Left" Width="10">
+                            <Rectangle.Fill>
+                                <SolidColorBrush Color="{Binding Tag.Color, Converter={StaticResource DMColor}, UpdateSourceTrigger=PropertyChanged}" />
+                            </Rectangle.Fill>
+                        </Rectangle>
+                        <iconpacks:PackIconFontAwesome Kind="FlagSolid" Visibility="{Binding Start, Converter={StaticResource BooleanToVisibilityConverter}}" Margin="0,0,5,0" VerticalAlignment="Center" />
+                        <TextBlock>
+                            <Run Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" /><LineBreak /><Run Text="{Binding Tag.Name, UpdateSourceTrigger=PropertyChanged}" FontSize="9" FontStyle="Italic" Foreground="Gray" />
+                        </TextBlock>
                     </StackPanel>
                     <HierarchicalDataTemplate.ItemTemplate>
                         <DataTemplate>

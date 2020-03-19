@@ -1,0 +1,139 @@
+﻿<mah:MetroWindow
+    xmlns:mah="http://metro.mahapps.com/winfx/xaml/controls" x:Class="Apollo.Editor.Tags"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:Apollo.Editor"
+    xmlns:iconpacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
+    xmlns:math="http://hexinnovation.com/math"
+    mc:Ignorable="d"
+        Title="Tags" Height="450" Width="600" ResizeMode="NoResize" Closing="MetroWindow_Closing">
+    <Window.Resources>
+        <math:MathConverter x:Key="Math" />
+        <local:DrawingMediaColorConverter x:Key="ColorConv" />
+    </Window.Resources>
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="2*" />
+        </Grid.ColumnDefinitions>
+        <ListView x:Name="tags" Margin="0,0,0,42" BorderBrush="{x:Null}" SelectionChanged="tags_SelectionChanged">
+            <ListView.ItemTemplate>
+                <DataTemplate>
+                    <TextBlock Text="{Binding Name}" />
+                </DataTemplate>
+            </ListView.ItemTemplate>
+        </ListView>
+        <StackPanel Orientation="Horizontal" Margin="5" VerticalAlignment="Bottom">
+            <Button x:Name="btnAdd" Width="32" Style="{DynamicResource MahApps.Metro.Styles.MetroCircleButtonStyle}" ToolTip="Add tag" Click="btnAdd_Click">
+                <iconpacks:PackIconFontAwesome Kind="PlusSolid" />
+            </Button>
+            <Button x:Name="btnRem" Width="32" Style="{DynamicResource MahApps.Metro.Styles.MetroCircleButtonStyle}" Height="32" ToolTip="Remove selected tag" Margin="5,0,0,0">
+                <iconpacks:PackIconFontAwesome Kind="MinusSolid" />
+            </Button>
+        </StackPanel>
+        <Label Grid.Column="1" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Content="Select tag or add a new one"  Visibility="{Binding SelectedItem, ElementName=tags, Converter={StaticResource Math}, ConverterParameter='visibleorcollapsed(x==null)'}" />
+        <StackPanel Grid.Column="1" Margin="10" Visibility="{Binding SelectedItem, ElementName=tags, Converter={StaticResource Math}, ConverterParameter='visibleorcollapsed(x!=null)'}">
+            <TextBox mah:TextBoxHelper.Watermark="Tag name" mah:TextBoxHelper.UseFloatingWatermark="True" Text="{Binding SelectedItem.Name, ElementName=tags, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+            <StackPanel>
+                <Label Content="Tag color:" />
+                <Grid>
+                    <Grid.Background>
+                        <DrawingBrush TileMode="Tile" Viewport="0,0,12,12" ViewportUnits="Absolute">
+                            <DrawingBrush.Drawing>
+                                <GeometryDrawing Geometry="M0,0 H1 V1 H2 V2 H1 V1 H0Z" Brush="LightGray" />
+                            </DrawingBrush.Drawing>
+                        </DrawingBrush>
+                    </Grid.Background>
+                    <Rectangle x:Name="tagColor" Height="24" Fill="Transparent" />
+                </Grid>
+            </StackPanel>
+            <StackPanel>
+                <Label Content="Red:" />
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <mah:NumericUpDown Value="{Binding Value,ElementName=sliderR, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,5,0" Width="40" Maximum="255" HasDecimals="False" HideUpDownButtons="True" NumericInputMode="Numbers" />
+                    <Grid Grid.Column="1" VerticalAlignment="Center">
+                        <Grid.Background>
+                            <LinearGradientBrush EndPoint="1,0.5" StartPoint="0,0.5">
+                                <GradientStop Color="Black" Offset="0" />
+                                <GradientStop Color="Red" Offset="1" />
+                            </LinearGradientBrush>
+                        </Grid.Background>
+                        <Slider x:Name="sliderR" Maximum="255" SmallChange="1" mah:SliderHelper.EnableMouseWheel="MouseHover" Value="0" Style="{DynamicResource FlatSlider}" VerticalAlignment="Center" Foreground="Transparent" Background="Transparent" ValueChanged="UpdateColor" BorderBrush="Gray" />
+                    </Grid>
+                </Grid>
+            </StackPanel>
+            <StackPanel>
+                <Label Content="Green:" />
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <mah:NumericUpDown Value="{Binding Value,ElementName=sliderG, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,5,0" HideUpDownButtons="True" Width="40" Maximum="255" HasDecimals="False" NumericInputMode="Numbers" />
+                    <Grid Grid.Column="1" VerticalAlignment="Center">
+                        <Grid.Background>
+                            <LinearGradientBrush EndPoint="1,0.5" StartPoint="0,0.5">
+                                <GradientStop Color="Black" Offset="0" />
+                                <GradientStop Color="Lime" Offset="1" />
+                            </LinearGradientBrush>
+                        </Grid.Background>
+                        <Slider x:Name="sliderG" Maximum="255" SmallChange="1" mah:SliderHelper.EnableMouseWheel="MouseHover" Value="0" Style="{DynamicResource FlatSlider}" VerticalAlignment="Center" Foreground="Transparent" Background="Transparent" ValueChanged="UpdateColor" BorderBrush="Gray" />
+                    </Grid>
+                </Grid>
+            </StackPanel>
+            <StackPanel>
+                <Label Content="Green:" />
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <mah:NumericUpDown Value="{Binding Value,ElementName=sliderB, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,5,0" HideUpDownButtons="True" Width="40" Maximum="255" HasDecimals="False" NumericInputMode="Numbers" />
+                    <Grid Grid.Column="1" VerticalAlignment="Center">
+                        <Grid.Background>
+                            <LinearGradientBrush EndPoint="1,0.5" StartPoint="0,0.5">
+                                <GradientStop Color="Black" Offset="0" />
+                                <GradientStop Color="Blue" Offset="1" />
+                            </LinearGradientBrush>
+                        </Grid.Background>
+                        <Slider x:Name="sliderB" Maximum="255" SmallChange="1" mah:SliderHelper.EnableMouseWheel="MouseHover" Value="0" Style="{DynamicResource FlatSlider}" VerticalAlignment="Center" Foreground="Transparent" Background="Transparent" ValueChanged="UpdateColor" BorderBrush="Gray" />
+                    </Grid>
+                </Grid>
+            </StackPanel>
+            <StackPanel>
+                <Label Content="Transparency:" />
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <mah:NumericUpDown Value="{Binding Value,ElementName=sliderA, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,5,0" HideUpDownButtons="True" Width="40" Maximum="255" HasDecimals="False" NumericInputMode="Numbers" />
+                    <Grid Grid.Column="1" VerticalAlignment="Center">
+                        <Grid.Background>
+                            <DrawingBrush TileMode="Tile" Viewport="0,0,12,12" ViewportUnits="Absolute">
+                                <DrawingBrush.Drawing>
+                                    <GeometryDrawing Geometry="M0,0 H1 V1 H2 V2 H1 V1 H0Z" Brush="LightGray" />
+                                </DrawingBrush.Drawing>
+                            </DrawingBrush>
+                        </Grid.Background>
+                        <Grid>
+                            <Grid.Background>
+                                <LinearGradientBrush EndPoint="1,0.5" StartPoint="0,0.5">
+                                    <GradientStop Color="Black" Offset="1" />
+                                    <GradientStop Color="Transparent" Offset="0" />
+                                </LinearGradientBrush>
+                            </Grid.Background>
+                            <Slider x:Name="sliderA" Maximum="255" SmallChange="1" mah:SliderHelper.EnableMouseWheel="MouseHover" Value="255" Style="{DynamicResource FlatSlider}" VerticalAlignment="Center" Foreground="Transparent" Background="Transparent" ValueChanged="UpdateColor" BorderBrush="Gray" />
+                        </Grid>
+                    </Grid>
+                </Grid>
+            </StackPanel>
+        </StackPanel>
+    </Grid>
+</mah:MetroWindow>

@@ -27,13 +27,15 @@ namespace Apollo.Editor
         public static RoutedCommand SelectTarget = new RoutedCommand("SelectTarget", typeof(EditDialog), new InputGestureCollection() { new KeyGesture(Key.T, ModifierKeys.Control) });
 
         public static readonly DependencyProperty ItemProperty = DependencyProperty.Register("Item", typeof(IDialog), typeof(TextEditor), new PropertyMetadata(null));
+
         public IDialog Item
         {
             get => (IDialog)GetValue(ItemProperty);
             set => SetValue(ItemProperty, value);
         }
 
-        bool updating = false;
+        private bool updating = false;
+
         public EditDialog()
         {
             InitializeComponent();
@@ -46,6 +48,7 @@ namespace Apollo.Editor
             try
             {
                 BindingOperations.SetBinding(txtName, TextBox.TextProperty, new Binding("Name") { Source = Item, Mode = BindingMode.TwoWay, UpdateSourceTrigger = UpdateSourceTrigger.PropertyChanged });
+                BindingOperations.SetBinding(txtNote, TextBox.TextProperty, new Binding("Note") { Source = Item, Mode = BindingMode.TwoWay, UpdateSourceTrigger = UpdateSourceTrigger.PropertyChanged });
                 BindingOperations.SetBinding(text.Editor, TextBox.TextProperty, new Binding("Text") { Source = Item, Mode = BindingMode.TwoWay, UpdateSourceTrigger = UpdateSourceTrigger.PropertyChanged });
                 if (Item.GetType() == typeof(Dialog))
                 {
@@ -53,6 +56,8 @@ namespace Apollo.Editor
                     spOption.Visibility = Visibility.Collapsed;
                     BindingOperations.SetBinding(cbStart, CheckBox.IsCheckedProperty, new Binding("Start") { Source = Item, Mode = BindingMode.TwoWay, UpdateSourceTrigger = UpdateSourceTrigger.PropertyChanged });
                     BindingOperations.SetBinding(txtActions, TextBox.TextProperty, new Binding("Actions") { Source = Item, Mode = BindingMode.TwoWay, UpdateSourceTrigger = UpdateSourceTrigger.PropertyChanged });
+                    BindingOperations.SetBinding(cbTag, ComboBox.ItemsSourceProperty, new Binding("Tags") { Source = (App.Current.MainWindow as MainWindow).Story, Mode = BindingMode.OneWay, UpdateSourceTrigger = UpdateSourceTrigger.PropertyChanged });
+                    BindingOperations.SetBinding(cbTag, ComboBox.SelectedItemProperty, new Binding("Tag") { Source = Item, Mode = BindingMode.TwoWay, UpdateSourceTrigger = UpdateSourceTrigger.PropertyChanged });
                     txtID.Text = "ID: " + Item.ID.ToUpper();
                 }
                 else if (Item.GetType() == typeof(DialogOption))

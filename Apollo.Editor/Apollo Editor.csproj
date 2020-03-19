@@ -7,13 +7,13 @@
     <ProjectGuid>{3E46BFD1-6F7B-49CD-9D90-C4D25FFAA4FC}</ProjectGuid>
     <OutputType>WinExe</OutputType>
     <RootNamespace>Apollo.Editor</RootNamespace>
-    <AssemblyName>Apollo.Editor</AssemblyName>
+    <AssemblyName>Apollo Editor</AssemblyName>
     <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <ProjectTypeGuids>{60dc8134-eba5-43b8-bcc9-bb4bc16c2548};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
     <WarningLevel>4</WarningLevel>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
-    <Deterministic>true</Deterministic>
+    <Deterministic>false</Deterministic>
     <IsWebBootstrapper>true</IsWebBootstrapper>
     <NuGetPackageImportStamp>
     </NuGetPackageImportStamp>
@@ -64,7 +64,7 @@
     <ApplicationIcon>apollo.editor.ico</ApplicationIcon>
   </PropertyGroup>
   <PropertyGroup>
-    <SignManifests>true</SignManifests>
+    <SignManifests>false</SignManifests>
   </PropertyGroup>
   <PropertyGroup>
     <ManifestCertificateThumbprint>D7ACBAEBF5B682618408B990A4E6AD28F6519A85</ManifestCertificateThumbprint>
@@ -73,7 +73,7 @@
     <ManifestKeyFile>Apollo.Editor_TemporaryKey.pfx</ManifestKeyFile>
   </PropertyGroup>
   <PropertyGroup>
-    <GenerateManifests>true</GenerateManifests>
+    <GenerateManifests>false</GenerateManifests>
   </PropertyGroup>
   <PropertyGroup>
     <SignAssembly>false</SignAssembly>
@@ -128,6 +128,12 @@
     <ErrorReport>prompt</ErrorReport>
     <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
     <Prefer32Bit>true</Prefer32Bit>
+  </PropertyGroup>
+  <PropertyGroup>
+    <TargetZone>LocalIntranet</TargetZone>
+  </PropertyGroup>
+  <PropertyGroup>
+    <ApplicationManifest>Properties\app.manifest</ApplicationManifest>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="ControlzEx, Version=3.0.2.4, Culture=neutral, processorArchitecture=MSIL">
@@ -214,6 +220,13 @@
     <Reference Include="Markdig, Version=0.18.3.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\Markdig.0.18.3\lib\net40\Markdig.dll</HintPath>
     </Reference>
+    <Reference Include="MathConverter, Version=1.2.1.6, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\MathConverter.1.2.1.6\lib\net40-client\MathConverter.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.DwayneNeed, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\Libraries\Microsoft.DwayneNeed.dll</HintPath>
+    </Reference>
     <Reference Include="Microsoft.mshtml, Version=7.0.3300.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
       <EmbedInteropTypes>True</EmbedInteropTypes>
     </Reference>
@@ -264,6 +277,9 @@
     <Compile Include="StoryProperties.xaml.cs">
       <DependentUpon>StoryProperties.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Tags.xaml.cs">
+      <DependentUpon>Tags.xaml</DependentUpon>
+    </Compile>
     <Compile Include="TextEditor.xaml.cs">
       <DependentUpon>TextEditor.xaml</DependentUpon>
     </Compile>
@@ -300,6 +316,10 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="StoryProperties.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Tags.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -352,6 +372,7 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
     <None Include="packages.config" />
+    <None Include="Properties\app.manifest" />
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
@@ -398,12 +419,8 @@
     </FileAssociation>
   </ItemGroup>
   <ItemGroup>
-    <Content Include="apollo.editor.map.ico">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="apollo.editor.story.ico">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
+    <Resource Include="apollo.editor.map.ico" />
+    <Resource Include="apollo.editor.story.ico" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Import Project="..\packages\jnm2.ReferenceAssemblies.net35.1.0.1\build\jnm2.ReferenceAssemblies.net35.targets" Condition="Exists('..\packages\jnm2.ReferenceAssemblies.net35.1.0.1\build\jnm2.ReferenceAssemblies.net35.targets')" />
