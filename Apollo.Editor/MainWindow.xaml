@@ -8,6 +8,7 @@
         xmlns:local="clr-namespace:Apollo.Editor"
     xmlns:graphxctrl="http://schemas.panthernet.ru/graphx/"
     xmlns:iconpacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
+    xmlns:math="http://hexinnovation.com/math"
     mc:Ignorable="d"
         Title="Apollo Editor" Height="600" Width="1024" Icon="apollo.editor.ico" UseLayoutRounding="True" Closing="MetroWindow_Closing">
     <mah:MetroWindow.RightWindowCommands>
@@ -23,6 +24,7 @@
         <local:TagBrushConverter x:Key="TagBrush" />
         <local:TagNameConverter x:Key="TagName" />
         <local:DrawingMediaColorConverter x:Key="DMColor" />
+        <math:MathConverter x:Key="Math" />
         <Storyboard x:Key="HideSelect">
             <DoubleAnimation Storyboard.TargetProperty="Opacity" Storyboard.TargetName="Select" From="1.0" To="0" Duration="0:0:0.5" BeginTime="0" />
             <ThicknessAnimation Storyboard.TargetProperty="Margin" Storyboard.TargetName="Select" From="0,0,0,0" To="0,-65,0,0" Duration="0:0:0.5" BeginTime="0" />
@@ -98,7 +100,7 @@
     </Window.Resources>
     <Grid ClipToBounds="True">
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="1*" MinWidth="170" />
+            <ColumnDefinition Width="200" MinWidth="170" />
             <ColumnDefinition Width="2" />
             <ColumnDefinition Width="4*" />
             <ColumnDefinition Width="2" />
@@ -106,7 +108,18 @@
         </Grid.ColumnDefinitions>
         <GridSplitter Grid.Column="1" HorizontalAlignment="Stretch" />
         <GridSplitter Grid.Column="3" HorizontalAlignment="Stretch" />
-        <TreeView x:Name="tree" Margin="0,0,0,52" SelectedItemChanged="Tree_SelectedItemChanged" ItemsSource="{Binding Story.Dialogs}">
+        <ComboBox x:Name="cbTag" mah:TextBoxHelper.Watermark="Show Tag" mah:TextBoxHelper.ClearTextButton="{Binding SelectedItem, RelativeSource={RelativeSource Self},Converter={StaticResource Math}, ConverterParameter='x!=null'}" VerticalAlignment="Top" SelectionChanged="FilterChanged">
+            <ComboBox.ItemTemplate>
+                <DataTemplate>
+                    <TextBlock Text="{Binding Name}" />
+                </DataTemplate>
+            </ComboBox.ItemTemplate>
+        </ComboBox>
+        <TreeView x:Name="tree" Margin="0,26,0,52" SelectedItemChanged="Tree_SelectedItemChanged" ItemsSource="{Binding}">
+            <TreeView.DataContext>
+                <CollectionViewSource x:Name="coll" Source="{Binding Story.Dialogs}" Filter="FilerTree">
+                </CollectionViewSource>
+            </TreeView.DataContext>
             <TreeView.ItemContainerStyle>
                 <Style TargetType="{x:Type TreeViewItem}" BasedOn="{StaticResource {x:Type TreeViewItem}}">
                     <Setter Property="IsSelected"  Value="{Binding Selected, Mode=TwoWay}" />
@@ -115,14 +128,14 @@
             <TreeView.ItemTemplate>
                 <HierarchicalDataTemplate ItemsSource="{Binding Options}">
                     <StackPanel Orientation="Horizontal">
-                        <Rectangle HorizontalAlignment="Left" Width="10">
+                        <Rectangle HorizontalAlignment="Left" Width="5" Margin="0,0,5,0">
                             <Rectangle.Fill>
                                 <SolidColorBrush Color="{Binding Tag.Color, Converter={StaticResource DMColor}, UpdateSourceTrigger=PropertyChanged}" />
                             </Rectangle.Fill>
                         </Rectangle>
                         <iconpacks:PackIconFontAwesome Kind="FlagSolid" Visibility="{Binding Start, Converter={StaticResource BooleanToVisibilityConverter}}" Margin="0,0,5,0" VerticalAlignment="Center" />
                         <TextBlock>
-                            <Run Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" /><LineBreak /><Run Text="{Binding Tag.Name, UpdateSourceTrigger=PropertyChanged}" FontSize="9" FontStyle="Italic" Foreground="Gray" />
+                            <Run Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" /><Span FontSize="{Binding Tag, Converter={StaticResource Math}, ConverterParameter='x==null?0.01:9'}"><LineBreak /><Run Text="{Binding Tag.Name, UpdateSourceTrigger=PropertyChanged}" FontStyle="Italic" Foreground="Gray" /></Span>
                         </TextBlock>
                     </StackPanel>
                     <HierarchicalDataTemplate.ItemTemplate>

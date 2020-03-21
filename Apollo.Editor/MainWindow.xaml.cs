@@ -57,6 +57,11 @@ namespace Apollo.Editor
             ZoomControl.SetViewFinderVisibility(zoom, Visibility.Collapsed);
             //BindingOperations.SetBinding(editor, EditDialog.ItemProperty, new Binding("SelectedItem") { Source = tree, Mode = BindingMode.TwoWay });
             placeholder = scroll.Content;
+            if (set.Default.Update)
+            {
+                set.Default.Upgrade();
+                set.Default.Save();
+            }
             if (set.Default.Recent == null)
             {
                 set.Default.Recent = new System.Collections.Specialized.StringCollection();
@@ -109,8 +114,24 @@ namespace Apollo.Editor
             }
         }
 
-        public void Export(object sender, ExecutedRoutedEventArgs e)
+        public async void Export(object sender, ExecutedRoutedEventArgs e)
         {
+            if (Story.StartDialog == null)
+            {
+                await this.ShowMessageAsync("There's something wrong", "Your story doesn't have any start dialog! Select one first");
+                return;
+            }
+            VistaSaveFileDialog s = new VistaSaveFileDialog();
+            s.Filter = "Apollo story|*.apst";
+            s.Title = "Export Apollo story...";
+            s.OverwritePrompt = true;
+            s.AddExtension = true;
+            s.FileOk += (sn, ev) =>
+            {
+                path = s.FileName + (s.FileName.EndsWith(".apst") ? "" : ".apst");
+                Story.SaveCompressed(path);
+            };
+            s.ShowDialog();
         }
 
         public void New()
@@ -307,8 +328,8 @@ namespace Apollo.Editor
         private void SaveAs(object sender, ExecutedRoutedEventArgs e)
         {
             VistaSaveFileDialog s = new VistaSaveFileDialog();
-            s.Filter = "Apollo story|*.apstp";
-            s.Title = "Save Apollo story...";
+            s.Filter = "Apollo story project|*.apstp";
+            s.Title = "Save Apollo story project...";
             s.OverwritePrompt = true;
             s.AddExtension = true;
             s.FileOk += (sn, ev) =>
@@ -420,6 +441,7 @@ namespace Apollo.Editor
         {
             if (rel)
                 graph.RelayoutGraph(true);
+            graph.ShowAllEdgesArrows(true);
             foreach (var p in pos)
             {
                 var vx = graph.VertexList.FirstOrDefault(x => x.Key.Dialog.ID == p.DialogID);
@@ -463,7 +485,7 @@ namespace Apollo.Editor
             if (!o.TargetID.IsNullOrEmpty())
             {
                 var de = new DialogEdge(graph.VertexList.First(x => x.Key.Dialog.ID == Story.FindParent(o).ID).Key, graph.VertexList.First(x => x.Key.Dialog.ID == o.TargetID).Key) { DialogOption = o };
-                graph.AddEdge(de, new EdgeControl(graph.VertexList.First(x => x.Key.Dialog.ID == Story.FindParent(o).ID).Value, graph.VertexList.First(x => x.Key.Dialog.ID == o.TargetID).Value, de, false));
+                graph.AddEdge(de, new EdgeControl(graph.VertexList.First(x => x.Key.Dialog.ID == Story.FindParent(o).ID).Value, graph.VertexList.First(x => x.Key.Dialog.ID == o.TargetID).Value, de, false) { ShowArrows = true });
             }
             Relayout();
             //graph.GenerateAllEdges(updateLayout: false);
@@ -516,7 +538,7 @@ namespace Apollo.Editor
             };
             foreach (var v in Story.Dialogs)
                 v.PropertyChanged += (s, e) => UpdateVertex(s as Dialog);
-            BindingOperations.SetBinding(tree, TreeView.ItemsSourceProperty, new Binding("Dialogs") { Source = Story, Mode = BindingMode.TwoWay, UpdateSourceTrigger = UpdateSourceTrigger.PropertyChanged });
+            BindingOperations.SetBinding(coll, CollectionViewSource.SourceProperty, new Binding("Dialogs") { Source = Story, Mode = BindingMode.TwoWay, UpdateSourceTrigger = UpdateSourceTrigger.PropertyChanged });
             BindingOperations.SetBinding(sp.txtTitle, TextBox.TextProperty, new Binding("Title") { Source = Story, Mode = BindingMode.TwoWay, UpdateSourceTrigger = UpdateSourceTrigger.PropertyChanged });
             BindingOperations.SetBinding(sp.txtDescription.Editor, TextBox.TextProperty, new Binding("Description") { Source = Story, Mode = BindingMode.TwoWay, UpdateSourceTrigger = UpdateSourceTrigger.PropertyChanged });
             BindingOperations.SetBinding(sp.txtAuthor, TextBox.TextProperty, new Binding("Author") { Source = Story, Mode = BindingMode.TwoWay, UpdateSourceTrigger = UpdateSourceTrigger.PropertyChanged });
@@ -525,6 +547,7 @@ namespace Apollo.Editor
             BindingOperations.SetBinding(sp.DefaultBack, ComboBox.SelectedItemProperty, new Binding("DefaultBack") { Source = Story, Mode = BindingMode.TwoWay, UpdateSourceTrigger = UpdateSourceTrigger.PropertyChanged });
             BindingOperations.SetBinding(ps.data, DataGrid.ItemsSourceProperty, new Binding("Variables") { Source = Story, Mode = BindingMode.TwoWay, UpdateSourceTrigger = UpdateSourceTrigger.PropertyChanged });
             BindingOperations.SetBinding(ts.tags, DataGrid.ItemsSourceProperty, new Binding("Tags") { Source = Story, Mode = BindingMode.TwoWay, UpdateSourceTrigger = UpdateSourceTrigger.PropertyChanged });
+            BindingOperations.SetBinding(cbTag, ComboBox.ItemsSourceProperty, new Binding("Tags") { Source = Story, UpdateSourceTrigger = UpdateSourceTrigger.PropertyChanged });
             BindingOperations.SetBinding(editor.text.btnVariable, ItemsControl.ItemsSourceProperty, new Binding("Variables") { Source = Story, Mode = BindingMode.OneWay, UpdateSourceTrigger = UpdateSourceTrigger.PropertyChanged });
             //BindingOperations.SetBinding(SelectTagMenu, DataGrid.ItemsSourceProperty, new Binding("Tags") { Source = Story, Mode = BindingMode.OneWay, UpdateSourceTrigger = UpdateSourceTrigger.PropertyChanged });
             ps.data.Items.Refresh();
@@ -635,6 +658,7 @@ namespace Apollo.Editor
 
         private void graph_VertexSelected(object sender, GraphX.Controls.Models.VertexSelectedEventArgs args)
         {
+            if (args.VertexControl.Opacity != 1) return;
             VerDown = true;
             if (Selecting)
             {
@@ -652,6 +676,7 @@ namespace Apollo.Editor
         private void graph_EdgeSelected(object sender, GraphX.Controls.Models.EdgeSelectedEventArgs args)
         {
             //VerDown = true;
+            if (args.EdgeControl.Opacity != 1) return;
             if (Selecting) return;
             var dialog = (args.EdgeControl.Source.Vertex as DialogVertex).Dialog;
             (tree.ItemContainerGenerator.ContainerFromItem(dialog) as TreeViewItem).IsExpanded = true;
@@ -695,6 +720,29 @@ namespace Apollo.Editor
         private void btnStory_Click(object sender, RoutedEventArgs e)
         {
             (Resources["StoryMenu"] as ContextMenu).IsOpen = true;
+        }
+
+        private void FilerTree(object sender, FilterEventArgs e)
+        {
+            if (!(e.Item is Dialog)) return;
+            e.Accepted = cbTag.SelectedItem == null || (e.Item as Dialog).Tag == cbTag.SelectedItem;
+            var vert = graph.VertexList.FirstOrDefault(x => x.Key.Dialog.ID == (e.Item as Dialog).ID).Value;
+            if (vert != null)
+            {
+                //vert.IsHitTestVisible = e.Accepted;
+                vert.Opacity = e.Accepted ? 1 : 0.5;
+            }
+            foreach (var v in graph.EdgesList)
+            {
+                var en = v.Value.Target.Opacity == 1 && v.Value.Source.Opacity == 1;
+                //v.Value.IsHitTestVisible = e.Accepted;
+                v.Value.Opacity = en ? 1 : 0.5;
+            }
+        }
+
+        private void FilterChanged(object sender, SelectionChangedEventArgs e)
+        {
+            (tree.DataContext as CollectionViewSource).View.Refresh();
         }
     }
 }

@@ -1,4 +1,4 @@
-﻿# Tags
+﻿# Markup
 ## Syntax
 ##### Without parameters
 <code>\`tag\`</code>

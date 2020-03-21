@@ -19,7 +19,7 @@ namespace Apollo.Editor
     public partial class ExpressionsHelp : MetroWindow
     {
         private Dictionary<string, string> HelpFiles = new Dictionary<string, string>();
-        private string path = Path.Combine(Process.GetCurrentProcess().MainModule.FileName, "Help");
+        private string path = Path.Combine(Path.GetDirectoryName(Process.GetCurrentProcess().MainModule.FileName), "Help");
 
         public ExpressionsHelp()
         {
@@ -78,10 +78,25 @@ namespace Apollo.Editor
 
         private void Browser_Navigating(object sender, System.Windows.Navigation.NavigatingCancelEventArgs e)
         {
-            if (e.Uri != null && HelpFiles.ContainsKey(e.Uri.AbsolutePath))
+            if (e.Uri != null)
             {
-                e.Cancel = true;
-                Tree.ItemContainerGenerator.ContainerFromItem(Tree.ItemContainerGenerator.Items.Cast<KeyValuePair<string, string>>().First(x => x.Key == e.Uri.AbsolutePath)).SetValue(TreeViewItem.IsSelectedProperty, true);
+                if (HelpFiles.ContainsKey(e.Uri.AbsolutePath))
+                {
+                    e.Cancel = true;
+                    Tree.ItemContainerGenerator.ContainerFromItem(Tree.ItemContainerGenerator.Items.Cast<KeyValuePair<string, string>>().First(x => x.Key == e.Uri.AbsolutePath)).SetValue(TreeViewItem.IsSelectedProperty, true);
+                }
+                else if (e.Uri.AbsolutePath.StartsWith("Licenses/"))
+                {
+                    e.Cancel = true;
+                    var file = Path.Combine(path, e.Uri.AbsolutePath);
+                    if (File.Exists(file))
+                        Process.Start(file);
+                }
+                else
+                {
+                    e.Cancel = true;
+                    Process.Start(e.Uri.ToString());
+                }
             }
         }
     }
