@@ -9,7 +9,7 @@
     xmlns:math="http://hexinnovation.com/math"
     x:Class="Apollo.Editor.EditDialog"
              mc:Ignorable="d"
-             d:DesignHeight="600" d:DesignWidth="400">
+             d:DesignHeight="700" d:DesignWidth="400">
     <UserControl.CommandBindings>
         <CommandBinding x:Name="SelTarget" Command="{x:Static local:EditDialog.SelectTarget}" Executed="SelectTarget_Executed" CanExecute="SelTarget_CanExecute" />
     </UserControl.CommandBindings>
@@ -22,7 +22,7 @@
         </ResourceDictionary>
     </UserControl.Resources>
     <ScrollViewer x:Name="scroll" HorizontalScrollBarVisibility="Hidden" VerticalScrollBarVisibility="Auto" HorizontalContentAlignment="Stretch">
-        <StackPanel Orientation="Vertical" Width="{Binding ViewportWidth, ElementName=scroll}">
+        <StackPanel Orientation="Vertical" Width="{Binding ViewportWidth, ElementName=scroll}" MinWidth="50">
             <TextBox x:Name="txtName" TextWrapping="Wrap" mah:TextBoxHelper.UseFloatingWatermark="True" mah:TextBoxHelper.Watermark="Short name" Margin="0,0,0,10" TextChanged="SetEdited" Text="{Binding Item.Name}" />
             <local:TextEditor x:Name="text" Margin="0,0,0,10" />
             <StackPanel x:Name="spDialog">
@@ -44,6 +44,7 @@
             <TextBox x:Name="txtSearch" mah:TextBoxHelper.UseFloatingWatermark="True" mah:TextBoxHelper.Watermark="Search" Margin="0,0,0,10" TextChanged="TxtSearch_TextChanged" />
             <ListBox x:Name="lbDialogs" ScrollViewer.VerticalScrollBarVisibility="Auto" SelectionChanged="LbDialogs_SelectionChanged" MaxHeight="200" />-->
             </StackPanel>
+            <TextBox x:Name="txtPostActions" Margin="0,10,0,0" mah:TextBoxHelper.UseFloatingWatermark="True" mah:TextBoxHelper.Watermark="Post-Actions" MaxHeight="200" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto" AcceptsReturn="True" AcceptsTab="True" FontFamily="Consolas" ToolTip="Actions to execute after displaying dialog, but before displaying options" TextChanged="SetEdited" />
             <TextBox x:Name="txtNote" MaxHeight="200" AcceptsReturn="True" ScrollViewer.VerticalScrollBarVisibility="Auto" TextWrapping="Wrap" mah:TextBoxHelper.Watermark="Note" mah:TextBoxHelper.UseFloatingWatermark="True" IsUndoEnabled="True" Margin="0,10,0,0" />
         </StackPanel>
     </ScrollViewer>

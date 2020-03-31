@@ -9,6 +9,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Apollo.Core\Apollo.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
     <None Update="apollo.story.ico">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>

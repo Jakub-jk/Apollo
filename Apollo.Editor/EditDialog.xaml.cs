@@ -50,22 +50,27 @@ namespace Apollo.Editor
                 BindingOperations.SetBinding(txtName, TextBox.TextProperty, new Binding("Name") { Source = Item, Mode = BindingMode.TwoWay, UpdateSourceTrigger = UpdateSourceTrigger.PropertyChanged });
                 BindingOperations.SetBinding(txtNote, TextBox.TextProperty, new Binding("Note") { Source = Item, Mode = BindingMode.TwoWay, UpdateSourceTrigger = UpdateSourceTrigger.PropertyChanged });
                 BindingOperations.SetBinding(text.Editor, TextBox.TextProperty, new Binding("Text") { Source = Item, Mode = BindingMode.TwoWay, UpdateSourceTrigger = UpdateSourceTrigger.PropertyChanged });
+                BindingOperations.SetBinding(txtPostActions, TextBox.TextProperty, new Binding("PostActions") { Source = Item, Mode = BindingMode.TwoWay, UpdateSourceTrigger = UpdateSourceTrigger.PropertyChanged });
                 if (Item.GetType() == typeof(Dialog))
                 {
+                    text.Editor.AcceptsReturn = true;
                     spDialog.Visibility = Visibility.Visible;
                     spOption.Visibility = Visibility.Collapsed;
                     BindingOperations.SetBinding(cbStart, CheckBox.IsCheckedProperty, new Binding("Start") { Source = Item, Mode = BindingMode.TwoWay, UpdateSourceTrigger = UpdateSourceTrigger.PropertyChanged });
                     BindingOperations.SetBinding(txtActions, TextBox.TextProperty, new Binding("Actions") { Source = Item, Mode = BindingMode.TwoWay, UpdateSourceTrigger = UpdateSourceTrigger.PropertyChanged });
                     BindingOperations.SetBinding(cbTag, ComboBox.ItemsSourceProperty, new Binding("Tags") { Source = (App.Current.MainWindow as MainWindow).Story, Mode = BindingMode.OneWay, UpdateSourceTrigger = UpdateSourceTrigger.PropertyChanged });
                     BindingOperations.SetBinding(cbTag, ComboBox.SelectedItemProperty, new Binding("Tag") { Source = Item, Mode = BindingMode.TwoWay, UpdateSourceTrigger = UpdateSourceTrigger.PropertyChanged });
+                    txtPostActions.ToolTip = "Actions to execute after displaying dialog, but before displaying options";
                     txtID.Text = "ID: " + Item.ID.ToUpper();
                 }
                 else if (Item.GetType() == typeof(DialogOption))
                 {
+                    text.Editor.AcceptsReturn = false;
                     spDialog.Visibility = Visibility.Collapsed;
                     spOption.Visibility = Visibility.Visible;
                     BindingOperations.SetBinding(txtRequirement, TextBox.TextProperty, new Binding("Requirement") { Source = Item, Mode = BindingMode.TwoWay, UpdateSourceTrigger = UpdateSourceTrigger.PropertyChanged });
                     BindingOperations.SetBinding(txtTarget, TextBox.TextProperty, new Binding("TargetID") { Source = Item, Mode = BindingMode.TwoWay, UpdateSourceTrigger = UpdateSourceTrigger.PropertyChanged });
+                    txtPostActions.ToolTip = "Actions to execute after selecting option";
                 }
             }
             catch { }

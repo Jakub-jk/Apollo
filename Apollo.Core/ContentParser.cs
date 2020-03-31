@@ -1,6 +1,7 @@
 ﻿using ExpressionEvaluation;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -31,6 +32,8 @@ namespace Apollo
         public ContentParser()
         {
             Eval.AdditionalFunctionEventHandler += Eval_AdditionalFunctionEventHandler;
+            if (output != null)
+                output.Parser = this;
         }
 
         private void Eval_AdditionalFunctionEventHandler(object sender, AdditionalFunctionEventArgs e)
@@ -72,6 +75,15 @@ namespace Apollo
                         int res = 1;
                         if (parameters.Length == 2 && int.TryParse(parameters[1].ToString(), out res))
                             e.ReturnValue = parameters[0].ToString().Multiply(res);
+                    }
+                    break;
+
+                case "input":
+                    {
+                        Output.Write((parameters.Length == 1 ? parameters[0] : "Input") + ": ");
+                        e.ReturnValue = Output.ReadLine();
+                        Output.CursorTop--;
+                        Output.Write("\r" + new string(' ', Output.WindowWidth) + "\r");
                     }
                     break;
             }
@@ -122,7 +134,7 @@ namespace Apollo
                         case "e":
                             {
                                 if (noExpressions)
-                                    await Write($"`v:{value}`");
+                                    await Write($"`e:{value}`");
                                 else
                                 {
                                     foreach (var v in value.Split(';'))
@@ -159,7 +171,7 @@ namespace Apollo
                             }
                             break;
 
-                        case "i":
+                        case "r":
                             {
                                 Output.InvertColor();
                             }
@@ -198,9 +210,15 @@ namespace Apollo
         public async void DisplayMenu(params (string Content, Action OnSelect, bool? Enabled)[] items)
         {
             Output.CursorVisible = false;
-            int selected = 0, top = Output.CursorTop;
+            int selected = -1, top = Output.CursorTop;
             while (true)
             {
+                if (selected == -1 && items.Where(x => x.Enabled == true).Any())
+                {
+                    do
+                        selected = selected == items.Length - 1 ? 0 : selected + 1;
+                    while (items[selected].Enabled != true);
+                }
                 for (int i = 0; i < items.Length; i++)
                 {
                     Output.Write("[");
@@ -218,15 +236,21 @@ namespace Apollo
                     case ConsoleKey.Enter:
                         goto Execute;
                     case ConsoleKey.UpArrow:
-                        do
-                            selected = selected == 0 ? items.Length - 1 : selected - 1;
-                        while (!items[selected].Enabled == true);
+                        if (items.Where(x => x.Enabled == true).Any())
+                        {
+                            do
+                                selected = selected <= 0 ? items.Length - 1 : selected - 1;
+                            while (items[selected].Enabled != true);
+                        }
                         break;
 
                     case ConsoleKey.DownArrow:
-                        do
-                            selected = selected == items.Length - 1 ? 0 : selected + 1;
-                        while (!items[selected].Enabled == true);
+                        if (items.Where(x => x.Enabled == true).Any())
+                        {
+                            do
+                                selected = selected == items.Length - 1 ? 0 : selected + 1;
+                            while (items[selected].Enabled != true);
+                        }
                         break;
 
                     default:
@@ -244,7 +268,8 @@ namespace Apollo
                 Output.CursorLeft = 0;
             }
         Execute:
-            items[selected].OnSelect.Invoke();
+            if (selected != -1)
+                items[selected].OnSelect.Invoke();
         }
     }
 }

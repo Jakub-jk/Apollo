@@ -21,6 +21,7 @@ namespace Apollo.Editor
         public bool CursorVisible { get; set; }
         public int CursorTop { get; set; }
         public int CursorLeft { get; set; }
+        public int WindowWidth => int.MaxValue;
 
         public ConsoleColor BackgroundColor
         {
@@ -79,8 +80,8 @@ namespace Apollo.Editor
         {
             if (doc == null) return;
             var trg = (doc as HTMLDocument).getElementById(target);
-            if (trg != null)
-                trg.innerHTML += s;
+            if (trg != null && !s.IsNullOrEmpty())
+                trg.innerHTML += s.Replace("\n", "</br>");
         }
 
         public void Write(object o)
@@ -96,6 +97,11 @@ namespace Apollo.Editor
         public void WriteLine(object o)
         {
             WriteLine(o.ToString());
+        }
+
+        public string ReadLine()
+        {
+            throw new NotImplementedException();
         }
 
         public PreviewConsole(WebBrowser browser)

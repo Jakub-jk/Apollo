@@ -52,7 +52,7 @@
             <RowDefinition Height="150" />
         </Grid.RowDefinitions>
 
-        <TextBox x:Name="Editor" TextWrapping="Wrap" mah:TextBoxHelper.UseFloatingWatermark="True" mah:TextBoxHelper.Watermark="{Binding Watermark, ElementName=textEditor}" AcceptsReturn="True" AcceptsTab="True" FontFamily="Consolas" Background="Black" Foreground="White" SpellCheck.IsEnabled="True" ScrollViewer.VerticalScrollBarVisibility="Auto" Grid.Row="1" Margin="0" TextChanged="Editor_TextChanged" Text="{Binding Text, Mode=TwoWay}" LostFocus="Editor_LostFocus" CaretBrush="White" SelectionBrush="{DynamicResource AccentBaseColorBrush}" SelectionChanged="Editor_SelectionChanged" IsUndoEnabled="True" />
+        <TextBox x:Name="Editor" TextWrapping="Wrap" mah:TextBoxHelper.UseFloatingWatermark="True" mah:TextBoxHelper.Watermark="{Binding Watermark, ElementName=textEditor}" AcceptsReturn="True" AcceptsTab="True" FontFamily="Consolas" Background="Black" Foreground="White" ScrollViewer.VerticalScrollBarVisibility="Auto" Grid.Row="1" Margin="0" TextChanged="Editor_TextChanged" Text="{Binding Text, Mode=TwoWay}" LostFocus="Editor_LostFocus" CaretBrush="White" SelectionBrush="{DynamicResource AccentBaseColorBrush}" SelectionChanged="Editor_SelectionChanged" IsUndoEnabled="True" UndoLimit="100" />
         <WrapPanel Orientation="Horizontal" Grid.Row="0" Focusable="False" Background="#19000000">
             <mah:DropDownButton x:Name="sbFore" Margin="5" Content="Text" Tag="Tło" BorderThickness="0,2" Focusable="False">
                 <mah:DropDownButton.BorderBrush>
@@ -114,11 +114,11 @@
                 <RowDefinition Height="*" />
             </Grid.RowDefinitions>
             <TextBlock Text="Preview:" Margin="0,0,0,5" />
-            <interop:AirspaceDecorator AirspaceMode="Redirect"
+            <interop:AirspaceDecorator x:Name="deco" AirspaceMode="Redirect"
                                    Background="Transparent"
                                    IsInputRedirectionEnabled="True"
-                                   IsOutputRedirectionEnabled="True">
-                <WebBrowser x:Name="Preview" Grid.Row="1" />
+                                   IsOutputRedirectionEnabled="True" Grid.Row="1">
+                <WebBrowser x:Name="Preview" />
             </interop:AirspaceDecorator>
         </Grid>
     </Grid>

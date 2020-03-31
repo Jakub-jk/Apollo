@@ -10,6 +10,7 @@ namespace Apollo
         bool CursorVisible { get; set; }
         int CursorTop { get; set; }
         int CursorLeft { get; set; }
+        int WindowWidth { get; }
         ConsoleColor BackgroundColor { get; set; }
         ConsoleColor ForegroundColor { get; set; }
 
@@ -28,6 +29,8 @@ namespace Apollo
         void Clear();
 
         ConsoleKey ReadKey();
+
+        string ReadLine();
     }
 
     public class DefaultConsole : IConsole
@@ -37,15 +40,14 @@ namespace Apollo
         public int CursorLeft { get => Console.CursorLeft; set => Console.CursorLeft = value; }
         public ConsoleColor BackgroundColor { get => Console.BackgroundColor; set => Console.BackgroundColor = value; }
         public ConsoleColor ForegroundColor { get => Console.ForegroundColor; set => Console.ForegroundColor = value; }
+        public int WindowWidth => Console.WindowWidth;
 
-        public ConsoleColor DefaultBackground { get; set; } = ConsoleColor.Black;
-        public ConsoleColor DefaultForeground { get; set; } = ConsoleColor.White;
         public ContentParser Parser { get; set; }
 
         public void ResetColor()
         {
-            ForegroundColor = DefaultForeground;
-            BackgroundColor = DefaultBackground;
+            ForegroundColor = Parser.DefaultText;
+            BackgroundColor = Parser.DefaultBack;
         }
 
         public void InvertColor()
@@ -83,6 +85,11 @@ namespace Apollo
         public ConsoleKey ReadKey()
         {
             return Console.ReadKey().Key;
+        }
+
+        public string ReadLine()
+        {
+            return Console.ReadLine();
         }
     }
 }

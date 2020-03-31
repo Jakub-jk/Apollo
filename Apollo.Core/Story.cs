@@ -62,6 +62,18 @@ namespace Apollo
 
         public event PropertyChangedEventHandler PropertyChanged;
 
+        [XmlIgnore]
+        public List<DialogOption> DialogOptions
+        {
+            get
+            {
+                var ret = new List<DialogOption>();
+                foreach (Dialog d in Dialogs)
+                    ret.AddRange(d.Options);
+                return ret;
+            }
+        }
+
         public Story()
         {
             Dialogs.CollectionChanged += (s, e) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("Dialogs"));
@@ -147,14 +159,11 @@ namespace Apollo
         public async void DisplayDialog(Dialog d)
         {
             DialogRequested?.Invoke(this, d);
-            foreach (var v in d.Actions.Split('\n'))
-            {
-                ContentParser.DefaultInstance.Eval.Expression = v;
-                ContentParser.DefaultInstance.Eval.Evaluate();
-            }
+            d.ProcessActions();
             CurrentID = d.ID;
             ContentParser.DefaultInstance.Output.Clear();
             await ContentParser.DefaultInstance.Display(d.Text + Environment.NewLine + Environment.NewLine);
+            d.ProcessPostActions();
             if (d.Options.Count == 0)
             {
                 await ContentParser.DefaultInstance.Display(Environment.NewLine + Continue);
@@ -172,11 +181,12 @@ namespace Apollo
                 }
                 return x.Name == ":cont" && av;
             });
-            if (d.Options.Where(x => x.Name == ":cont").Any())
+            if (cont.Any())
             {
                 var dop = cont.First();
                 await ContentParser.DefaultInstance.Display(Environment.NewLine + Continue);
                 ContentParser.DefaultInstance.Output.ReadKey();
+                dop.ProcessPostActions();
                 if (dop.TargetID.IsNullOrEmpty())
                     StoryEnded?.Invoke(this, d);
                 else
@@ -194,7 +204,11 @@ namespace Apollo
                     }
                     if (av == false)
                         continue;
-                    items.Add((dop.Text, new Action(() => DisplayDialog(this[dop.TargetID])), dop.TargetID.IsNullOrEmpty() ? null : (bool?)true));
+                    items.Add((dop.Text, new Action(() =>
+                    {
+                        dop.ProcessPostActions();
+                        DisplayDialog(this[dop.TargetID]);
+                    }), dop.TargetID.IsNullOrEmpty() ? null : (bool?)true));
                 }
                 ContentParser.DefaultInstance.DisplayMenu(items.ToArray());
             }
@@ -246,8 +260,8 @@ namespace Apollo
 
         public Dialog this[string ID]
         {
-            get => Dialogs.Where((d) => ID == d.ID).First();
-            set => Dialogs[Dialogs.IndexOf(Dialogs.Where((d) => ID == d.ID).First())] = value;
+            get => Dialogs.FirstOrDefault((d) => ID == d.ID);
+            set => Dialogs[Dialogs.IndexOf(Dialogs.FirstOrDefault((d) => ID == d.ID))] = value;
         }
     }
 }

@@ -12,8 +12,12 @@ namespace Apollo
         string ID { get; set; }
         string Note { get; set; }
 
+        string PostActions { get; set; }
+
         [XmlIgnore]
         bool Selected { get; set; }
+
+        void ProcessPostActions();
     }
 
     [XmlRoot("Dialog")]
@@ -27,6 +31,7 @@ namespace Apollo
         private string actions;
         private string note;
         private string tagid;
+        private string postActions;
         private Tag tag;
         private ObservableCollection<DialogOption> options = new ObservableCollection<DialogOption>();
 
@@ -65,6 +70,9 @@ namespace Apollo
         public string Actions { get => actions; set { actions = value; PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("Actions")); } }
 
         [XmlElement]
+        public string PostActions { get => postActions; set { postActions = value; PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("PostActions")); } }
+
+        [XmlElement]
         public string Note { get => note; set { note = value; PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("Note")); } }
 
         [XmlArray]
@@ -92,6 +100,30 @@ namespace Apollo
         }
 
         public event PropertyChangedEventHandler PropertyChanged;
+
+        public void ProcessActions()
+        {
+            if (!Actions.IsNullOrEmpty())
+            {
+                foreach (var v in Actions.Split('\n'))
+                {
+                    ContentParser.DefaultInstance.Eval.Expression = v;
+                    ContentParser.DefaultInstance.Eval.Evaluate();
+                }
+            }
+        }
+
+        public void ProcessPostActions()
+        {
+            if (!PostActions.IsNullOrEmpty())
+            {
+                foreach (var v in PostActions.Split('\n'))
+                {
+                    ContentParser.DefaultInstance.Eval.Expression = v;
+                    ContentParser.DefaultInstance.Eval.Evaluate();
+                }
+            }
+        }
 
         public Dialog Clone()
         {
@@ -125,6 +157,7 @@ namespace Apollo
         private string targetID;
         private string requirement;
         private bool selected;
+        private string postActions;
         private string note;
 
         [XmlAttribute]
@@ -146,6 +179,9 @@ namespace Apollo
         public bool Selected { get => selected; set { selected = value; PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("Selected")); } }
 
         [XmlElement]
+        public string PostActions { get => postActions; set { postActions = value; PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("PostActions")); } }
+
+        [XmlElement]
         public string Note { get => note; set { note = value; PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("Note")); } }
 
         public DialogOption()
@@ -159,6 +195,18 @@ namespace Apollo
         }
 
         public event PropertyChangedEventHandler PropertyChanged;
+
+        public void ProcessPostActions()
+        {
+            if (!PostActions.IsNullOrEmpty())
+            {
+                foreach (var v in PostActions.Split('\n'))
+                {
+                    ContentParser.DefaultInstance.Eval.Expression = v;
+                    ContentParser.DefaultInstance.Eval.Evaluate();
+                }
+            }
+        }
 
         public DialogOption Clone()
         {

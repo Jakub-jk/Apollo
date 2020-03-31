@@ -20,6 +20,8 @@ using GraphX.Controls;
 using System.IO;
 using System.Collections.Generic;
 using System.Windows.Media;
+using System.Diagnostics;
+using MahApps.Metro.IconPacks;
 
 namespace Apollo.Editor
 {
@@ -35,7 +37,7 @@ namespace Apollo.Editor
 
         public static RoutedCommand ShowPropertiesCmd = new RoutedCommand("ShowPropertiesCmd", typeof(MainWindow), new InputGestureCollection() { new KeyGesture(Key.P, ModifierKeys.Control | ModifierKeys.Shift) });
         public static RoutedCommand ShowVariablesCmd = new RoutedCommand("ShowVariablesCmd", typeof(MainWindow), new InputGestureCollection() { new KeyGesture(Key.V, ModifierKeys.Control | ModifierKeys.Shift) });
-        public static RoutedCommand ShowTagsCmd = new RoutedCommand("ShowTagsCmd", typeof(MainWindow), new InputGestureCollection() { new KeyGesture(Key.T, ModifierKeys.Control) });
+        public static RoutedCommand ShowTagsCmd = new RoutedCommand("ShowTagsCmd", typeof(MainWindow), new InputGestureCollection() { new KeyGesture(Key.T, ModifierKeys.Control | ModifierKeys.Shift) });
         public static RoutedCommand ExportCmd = new RoutedCommand("ExportCmd", typeof(MainWindow), new InputGestureCollection() { new KeyGesture(Key.E, ModifierKeys.Control) });
 
         private EditDialog editor = new EditDialog() { HorizontalAlignment = HorizontalAlignment.Stretch };
@@ -56,6 +58,29 @@ namespace Apollo.Editor
             InitializeComponent();
             ZoomControl.SetViewFinderVisibility(zoom, Visibility.Collapsed);
             //BindingOperations.SetBinding(editor, EditDialog.ItemProperty, new Binding("SelectedItem") { Source = tree, Mode = BindingMode.TwoWay });
+            string updater = Path.Combine(Path.GetDirectoryName(Process.GetCurrentProcess().MainModule.FileName), "updater.exe");
+            if (File.Exists(updater))
+            {
+                Process p = new Process() { StartInfo = new ProcessStartInfo(updater, "/justcheck"), EnableRaisingEvents = true };
+                p.Exited += async (s, e) =>
+                {
+                    if (p.ExitCode == 0)
+                    {
+                        while (Visibility != Visibility.Visible)
+                            await Task.Delay(100);
+                        await Dispatcher.Invoke(async () =>
+                        {
+                            var res = await this.ShowMessageAsync("Something new!", "Update available. Do you want to install it now?", MessageDialogStyle.AffirmativeAndNegative);
+                            if (res == MessageDialogResult.Affirmative)
+                            {
+                                Process.Start(updater, "/checknow -minuseractions");
+                                App.Current.Shutdown();
+                            }
+                        });
+                    }
+                };
+                p.Start();
+            }
             placeholder = scroll.Content;
             if (set.Default.Update)
             {
@@ -90,8 +115,8 @@ namespace Apollo.Editor
             List<CommandBinding> Bindings = new List<CommandBinding>()
             {
                 new CommandBinding(ShowPropertiesCmd, ShowProperties),
-                new CommandBinding(ShowVariablesCmd, (s, e) => ps.ShowDialog()),
-                new CommandBinding(ShowTagsCmd, (s, e) => ts.ShowDialog()),
+                new CommandBinding(ShowVariablesCmd, (s, e) => ps.ShowOrActivate()),
+                new CommandBinding(ShowTagsCmd, (s, e) => ts.ShowOrActivate()),
                 new CommandBinding(NewStoryCmd, New),
                 new CommandBinding(OpenCmd, Open),
                 new CommandBinding(SaveAsCmd, SaveAs),
@@ -105,7 +130,7 @@ namespace Apollo.Editor
                 (Resources["FileMenu"] as ContextMenu).CommandBindings.Add(v);
                 (Resources["StoryMenu"] as ContextMenu).CommandBindings.Add(v);
             }
-
+            ToggleWarnings(null, null);
             if (path.IsNullOrEmpty())
             {
                 ShowInTaskbar = false;
@@ -148,6 +173,8 @@ namespace Apollo.Editor
                 path = "";
             return Story != null;
         }
+
+        private int switchCount = 0;
 
         private void Tree_SelectedItemChanged(object sender, RoutedPropertyChangedEventArgs<object> e)
         {
@@ -199,7 +226,14 @@ namespace Apollo.Editor
                 editor.Update();
             }
             if (!loading && !path.IsNullOrEmpty())
-                Save();
+            {
+                switchCount++;
+                if (switchCount == 10)
+                {
+                    Save();
+                    switchCount = 0;
+                }
+            }
         }
 
         private void BtnAdd_Click(object sender, RoutedEventArgs e)
@@ -404,12 +438,11 @@ namespace Apollo.Editor
                 LogicCore.DefaultLayoutAlgorithmParams =
                                    LogicCore.AlgorithmFactory.CreateLayoutParameters(LayoutAlgorithmTypeEnum.Tree);
                 ((SimpleTreeLayoutParameters)LogicCore.DefaultLayoutAlgorithmParams).Direction = LayoutDirection.LeftToRight;
-                LogicCore.DefaultOverlapRemovalAlgorithm = OverlapRemovalAlgorithmTypeEnum.FSA;
-                LogicCore.DefaultOverlapRemovalAlgorithmParams =
-                                  LogicCore.AlgorithmFactory.CreateOverlapRemovalParameters(OverlapRemovalAlgorithmTypeEnum.FSA);
-                LogicCore.DefaultOverlapRemovalAlgorithmParams.HorizontalGap = 50;
-                LogicCore.DefaultOverlapRemovalAlgorithmParams.VerticalGap = 50;
-                LogicCore.DefaultEdgeRoutingAlgorithm = EdgeRoutingAlgorithmTypeEnum.SimpleER;
+                //LogicCore.DefaultOverlapRemovalAlgorithm = OverlapRemovalAlgorithmTypeEnum.OneWayFSA;
+                //LogicCore.DefaultOverlapRemovalAlgorithmParams = LogicCore.AlgorithmFactory.CreateOverlapRemovalParameters(OverlapRemovalAlgorithmTypeEnum.OneWayFSA);
+                //LogicCore.DefaultOverlapRemovalAlgorithmParams.HorizontalGap = 50;
+                //LogicCore.DefaultOverlapRemovalAlgorithmParams.VerticalGap = 50;
+                LogicCore.DefaultEdgeRoutingAlgorithm = EdgeRoutingAlgorithmTypeEnum.None;
                 LogicCore.AsyncAlgorithmCompute = false;
                 LogicCore.EdgeCurvingEnabled = true;
                 LogicCore.EnableParallelEdges = true;
@@ -529,15 +562,20 @@ namespace Apollo.Editor
                 loading = false;
                 return;
             }
-            //Story.PropertyChanged += (s, e) => Relayout();
+            Story.PropertyChanged += CheckStory;
             Story.Dialogs.CollectionChanged += (s, e) =>
             {
                 if (e.NewItems != null)
                     foreach (Dialog d in e.NewItems)
                         UpdateVertex(d);
+                CheckStory(null, null);
             };
             foreach (var v in Story.Dialogs)
-                v.PropertyChanged += (s, e) => UpdateVertex(s as Dialog);
+                v.PropertyChanged += (s, e) =>
+                {
+                    UpdateVertex(s as Dialog);
+                    CheckStory(null, null);
+                };
             BindingOperations.SetBinding(coll, CollectionViewSource.SourceProperty, new Binding("Dialogs") { Source = Story, Mode = BindingMode.TwoWay, UpdateSourceTrigger = UpdateSourceTrigger.PropertyChanged });
             BindingOperations.SetBinding(sp.txtTitle, TextBox.TextProperty, new Binding("Title") { Source = Story, Mode = BindingMode.TwoWay, UpdateSourceTrigger = UpdateSourceTrigger.PropertyChanged });
             BindingOperations.SetBinding(sp.txtDescription.Editor, TextBox.TextProperty, new Binding("Description") { Source = Story, Mode = BindingMode.TwoWay, UpdateSourceTrigger = UpdateSourceTrigger.PropertyChanged });
@@ -555,8 +593,33 @@ namespace Apollo.Editor
             Title = "Apollo Editor - " + Story.Title;
             UpdateRecent();
             GenerateGraph();
+            switchCount = 0;
             loading = false;
             set.Default.Edited = false;
+            CheckStory(null, null);
+        }
+
+        private void CheckStory(object sender, System.ComponentModel.PropertyChangedEventArgs e)
+        {
+            List<Warning> warns = new List<Warning>();
+            foreach (var v in Story.DialogOptions.Where(x => x.TargetID.IsNullOrEmpty()))
+                warns.Add(new Warning("TRGNULL", $"Dialog option \"{v.Name}\" has no target.", WarningType.Warning, () =>
+                {
+                    (tree.ItemContainerGenerator.ContainerFromItem(Story.FindParent(v)) as TreeViewItem).IsExpanded = true;
+                    v.Selected = true;
+                }));
+            if (Story.StartDialog == null)
+                warns.Add(new Warning("NOSTART", "Your story has no start dialog", WarningType.Error));
+            if (Story.Title.IsNullOrEmpty())
+                warns.Add(new Warning("NAMNULL", "Your story has no name", WarningType.Error, () => ShowPropertiesCmd.Execute(null, this)));
+            if (Story.Description.IsNullOrEmpty())
+                warns.Add(new Warning("DSCNULL", "Your story has no description", WarningType.Warning, () => ShowPropertiesCmd.Execute(null, this)));
+            Dispatcher.Invoke(() =>
+            {
+                errors.ItemsSource = warns;
+                txtWarnings.Text = warns.Where(x => x.Type == WarningType.Warning).Count().ToString();
+                txtErrors.Text = warns.Where(x => x.Type == WarningType.Error).Count().ToString();
+            });
         }
 
         public void UpdateVertex(Dialog d) => Dispatcher.Invoke(() =>
@@ -566,6 +629,7 @@ namespace Apollo.Editor
             {
                 ver.Value.Vertex = new DialogVertex(d);
                 ver.Value.Background = d.Tag == null ? Brushes.LightGray : new SolidColorBrush(d.Tag.Color.ToMediaColor());
+                ver.Value.Foreground = new SolidColorBrush((ver.Value.Background as SolidColorBrush).Color.Constrast());
             }
         });
 
@@ -592,7 +656,7 @@ namespace Apollo.Editor
 
         private void MProperties_Click(object sender, RoutedEventArgs e)
         {
-            sp.ShowDialog();
+            sp.ShowOrActivate();
         }
 
         private void SaveSettings()
@@ -632,26 +696,12 @@ namespace Apollo.Editor
 
         private void btnParams_Click(object sender, RoutedEventArgs e)
         {
-            if (!ps.IsVisible)
-                ps.Show();
-            if (ps.WindowState == WindowState.Minimized)
-                ps.WindowState = WindowState.Normal;
-            ps.Activate();
-            ps.Topmost = true;
-            ps.Topmost = false;
-            ps.Focus();
+            ps.ShowOrActivate();
         }
 
         private void btnExpHelp_Click(object sender, RoutedEventArgs e)
         {
-            if (!eh.IsVisible)
-                eh.Show();
-            if (eh.WindowState == WindowState.Minimized)
-                eh.WindowState = WindowState.Normal;
-            eh.Activate();
-            eh.Topmost = true;
-            eh.Topmost = false;
-            eh.Focus();
+            eh.ShowOrActivate();
         }
 
         private bool VerDown = false;
@@ -714,7 +764,7 @@ namespace Apollo.Editor
 
         private void ShowProperties(object sender, ExecutedRoutedEventArgs e)
         {
-            sp.ShowDialog();
+            sp.ShowOrActivate();
         }
 
         private void btnStory_Click(object sender, RoutedEventArgs e)
@@ -743,6 +793,42 @@ namespace Apollo.Editor
         private void FilterChanged(object sender, SelectionChangedEventArgs e)
         {
             (tree.DataContext as CollectionViewSource).View.Refresh();
+        }
+
+        private void GridSplitter_DragStarted(object sender, System.Windows.Controls.Primitives.DragStartedEventArgs e)
+        {
+            editor.text.deco.AirspaceMode = Microsoft.DwayneNeed.Interop.AirspaceMode.None;
+        }
+
+        private void GridSplitter_DragCompleted(object sender, System.Windows.Controls.Primitives.DragCompletedEventArgs e)
+        {
+            editor.text.deco.AirspaceMode = Microsoft.DwayneNeed.Interop.AirspaceMode.Redirect;
+        }
+
+        private void ToggleWarnings(object sender, RoutedEventArgs e)
+        {
+            if (err.Height.Value != 0)
+                err.Height = sep.Height = new GridLength(0);
+            else
+            {
+                err.Height = new GridLength(1, GridUnitType.Star);
+                sep.Height = new GridLength(2);
+            }
+        }
+
+        private void ErrorClicked(object sender, MouseButtonEventArgs e)
+        {
+            if ((e.MouseDevice.DirectlyOver as FrameworkElement).Parent is DataGridCell)
+            {
+                var item = DataGridRow.GetRowContainingElement((e.MouseDevice.DirectlyOver as FrameworkElement).Parent as FrameworkElement).Item as Warning;
+                item.OpenTarget?.Invoke();
+            }
+        }
+
+        private void ToggleWarningsDock(object sender, RoutedEventArgs e)
+        {
+            Grid.SetRowSpan(mainGrid, Grid.GetRowSpan(mainGrid) == 3 ? 1 : 3);
+            (btnWarningsDock.Content as PackIconFontAwesome).RotationAngle = Grid.GetRowSpan(mainGrid) == 3 ? 45 : 0;
         }
     }
 }

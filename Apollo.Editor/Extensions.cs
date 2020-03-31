@@ -4,6 +4,8 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 
@@ -148,5 +150,68 @@ namespace Apollo.Editor
                 return bmp;
             }
         }
+
+        public static Color Constrast(this Color c)
+        {
+            double l = (0.299 * c.R + 0.587 * c.G + 0.114 * c.B) / 255;
+            return l > 0.5 || c.A / 255d < 0.4 ? Colors.Black : Colors.White;
+        }
+
+        public static void ShowOrActivate(this Window w)
+        {
+            if (!w.IsVisible)
+                w.Show();
+            if (w.WindowState == WindowState.Minimized)
+                w.WindowState = WindowState.Normal;
+            w.Activate();
+            w.Topmost = true;
+            w.Topmost = false;
+            w.Focus();
+        }
+
+        public static Thickness Add(this Thickness t1, Thickness t2)
+        {
+            var ret = new Thickness();
+            ret.Left = t1.Left + t2.Left;
+            ret.Top = t1.Top + t2.Top;
+            ret.Right = t1.Right + t2.Right;
+            ret.Bottom = t1.Bottom + t2.Bottom;
+            return ret;
+        }
+    }
+
+    public static class AttachedProperties
+    {
+        #region Margin
+
+        public static readonly DependencyProperty ChildrenMarginProperty = DependencyProperty.RegisterAttached("ChildrenMargin", typeof(Thickness), typeof(AttachedProperties), new UIPropertyMetadata(new Thickness(), ChildrenMarginChanged));
+
+        public static Thickness GetChildrenMargin(DependencyObject d) => (Thickness)d.GetValue(ChildrenMarginProperty);
+
+        public static void SetChildrenMargin(DependencyObject d, Thickness value) => d.SetValue(ChildrenMarginProperty, value);
+
+        private static void ChildrenMarginChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        {
+            if (d == null || !(d is Panel))
+                return;
+            var panel = d as Panel;
+            if (!panel.IsLoaded)
+                panel.Loaded += (s, ea) => ApplyMargin();
+            else
+                ApplyMargin();
+
+            void ApplyMargin()
+            {
+                foreach (var c in panel.Children)
+                {
+                    if (c == null || !(c is FrameworkElement))
+                        continue;
+                    var elem = c as FrameworkElement;
+                    elem.Margin = elem.Margin.Add(GetChildrenMargin(panel));
+                }
+            }
+        }
+
+        #endregion Margin
     }
 }

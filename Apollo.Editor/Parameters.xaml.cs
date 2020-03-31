@@ -35,6 +35,7 @@ namespace Apollo.Editor
 
         private void MetroWindow_Closing(object sender, System.ComponentModel.CancelEventArgs e)
         {
+            data.CommitEdit();
             e.Cancel = true;
             this.Hide();
         }
